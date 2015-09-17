@@ -63,8 +63,9 @@ class Fuzzer(object):
         self._on = False
 
         # the AFL build path for afl-qemu-trace-*
-        qemu_dir = angr.Project(binary_path).arch.qemu_name
-        self.afl_path_var     = os.path.join(self.base, "bin", "afl", "tracers", qemu_dir)
+        p = angr.Project(binary_path)
+        tracer_dir = "%s-%s" % (p.loader.main_bin.os, p.arch.qemu_name)
+        self.afl_path_var     = os.path.join(self.base, "bin", "afl", "tracers", tracer_dir)
         self.qemu_dir         = self.afl_path_var
 
         l.debug("self.start_time: %r", self.start_time)
