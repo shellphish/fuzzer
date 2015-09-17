@@ -47,8 +47,6 @@ class Fuzzer(object):
         self.base = os.path.join(os.path.dirname(__file__), "..")
 
         self.start_time       = int(time.time())
-        # the path to AFL capable of calling driller
-        self.afl_path         = os.path.join(self.base, "bin", "afl", "afl-fuzz")
         # create_dict script
         self.create_dict_path = os.path.join(self.base, "bin", "create_dict.py")
         # afl dictionary
@@ -64,8 +62,13 @@ class Fuzzer(object):
 
         # the AFL build path for afl-qemu-trace-*
         p = angr.Project(binary_path)
-        tracer_dir = "%s-%s" % (p.loader.main_bin.os, p.arch.qemu_name)
-        self.afl_path_var     = os.path.join(self.base, "bin", "afl", "tracers", tracer_dir)
+        tracer_dir            = p.arch.qemu_name
+        afl_dir               = "afl-%s" % p.loader.main_bin.os
+
+        # the path to AFL capable of calling driller
+        self.afl_path         = os.path.join(self.base, "bin", afl_dir, "afl-fuzz")
+
+        self.afl_path_var     = os.path.join(self.base, "bin", afl_dir, "tracers", tracer_dir)
         self.qemu_dir         = self.afl_path_var
 
         l.debug("self.start_time: %r", self.start_time)
