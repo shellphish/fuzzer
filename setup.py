@@ -36,9 +36,26 @@ class build(_build):
             _build.run(self)
 cmdclass = {'build': build}
 
+AFL_UNIX_FUZZ = os.path.join(AFL_UNIX_INSTALL_PATH)
+AFL_CGC_FUZZ  = os.path.join(AFL_CGC_INSTALL_PATH)
+
+# get data_files ready for exporting, probably a better way to do this
+data_files = [
+    (AFL_UNIX_FUZZ, (os.path.join(AFL_UNIX_FUZZ, "afl-fuzz"),),),
+    (AFL_CGC_FUZZ, (os.path.join(AFL_CGC_FUZZ, "afl-fuzz"),),),
+    ]
+
+for ARCH in SUPPORTED_ARCHES:
+    TRACER_STR = os.path.join(AFL_UNIX_INSTALL_PATH, "tracers", ARCH)
+    data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
+
+# add cgc
+TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
+data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
 
 setup(
     name='fuzzer', version='0.1', description="Python wrapper for multiarch AFL",
     packages=['fuzzer'],
+    data_files=data_files,
     cmdclass=cmdclass,
 )
