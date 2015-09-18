@@ -10,6 +10,9 @@ l = logging.getLogger("fuzzer.fuzzer")
 
 config = { }
 
+class InstallError(Exception):
+    pass
+
 class EarlyCrash(Exception):
     pass
 
@@ -44,7 +47,8 @@ class Fuzzer(object):
                 raise ValueError("extra_opts must be a list of command line arguments")
 
         # base of the fuzzer package
-        self.base = os.path.join(os.path.dirname(__file__), "..")
+        self.base = os.path.dirname(__file__)
+        self._adjust_base()
 
         self.start_time       = int(time.time())
         # create_dict script
@@ -328,3 +332,17 @@ class Fuzzer(object):
         for _ in range(2, self.afl_count):
             slave = self._start_afl_instance()
             self.procs.append(slave)
+
+    ### UTIL
+
+    def _adjust_base(self):
+        '''
+        adjust self.base to point to the directory containing bin, there should always be a directory
+        containing bin below base intially
+        '''
+
+        while not "bin" in os.listdir(self.base) and os.path.abspath(self.base) != "/":
+            self.base = os.path.join(self.base, "..")
+
+        if os.path.abspath(self.base) == "/":
+            raise InstallError("could not find afl install directory")
