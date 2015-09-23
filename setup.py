@@ -20,7 +20,9 @@ if not os.path.exists(AFL_CGC_INSTALL_PATH):
     if subprocess.call(['git', 'clone', AFL_CGC_REPO, AFL_CGC_INSTALL_PATH]) != 0:
         raise LibError("Unable to retrieve afl-cgc")
 
-def _build_afls():
+def _build_all():
+
+    # build afls
     if subprocess.call(['./build.sh'] + SUPPORTED_ARCHES, cwd=AFL_UNIX_INSTALL_PATH) != 0:
         raise LibError("Unable to build afl-other-arch")
 
@@ -30,9 +32,13 @@ def _build_afls():
     if subprocess.call(['./build_qemu_support.sh'], cwd=os.path.join(AFL_CGC_INSTALL_PATH, "qemu_mode")) != 0:
         raise LibError("Unable to build afl-cgc-qemu")
 
+    # grab libraries
+    if subprocess.call(["./fetchlibs.sh"], cwd=".") != 0:
+        raise LibError("Unable to fetch libraries")
+
 class build(_build):
     def run(self):
-            self.execute(_build_afls, (), msg="Building AFL")
+            self.execute(_build_all, (), msg="Building AFL and grabbing libraries")
             _build.run(self)
 cmdclass = {'build': build}
 

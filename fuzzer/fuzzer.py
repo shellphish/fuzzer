@@ -117,6 +117,8 @@ class Fuzzer(object):
         # set environment variable for the AFL_PATH
         os.environ['AFL_PATH'] = self.afl_path_var
 
+        # set up libraries
+        self._export_library_path(p)
 
     ### EXPOSED
     def start(self):
@@ -346,3 +348,32 @@ class Fuzzer(object):
 
         if os.path.abspath(self.base) == "/":
             raise InstallError("could not find afl install directory")
+
+    def _export_library_path(self, p):
+        '''
+        export the correct library path for a given architecture
+        '''
+
+        directory = None
+        if p.arch.qemu_name == "aarch64":
+            directory = "arm64"
+        if p.arch.qemu_name == "i386":
+            directory = "i386"
+        if p.arch.qemu_name == "mips":
+            directory = "mips"
+        if p.arch.qemu_name == "ppc":
+            directory = "powerpc"
+        if p.arch.qemu_name == "arm":
+            # some stuff qira uses to determine the which libs to use for arm
+            progdata = open(self.binary_path, "rb").read(0x800)
+            if "/lib/ld-linux.so.3" in progdata:
+                directory = "armel"
+            elif "/lib/ld-linux-armhf.so.3" in progdata:
+                directory = "armhf"
+
+        if directory is None:
+            l.warning("architecture \"%s\" has no installed libraries", p.arch.qemu_name)
+        else:
+            path = os.path.join(self.base, "libs", directory)
+            l.info("exporting QEMU_LD_PREFIX of '%s'", path)
+            os.environ['QEMU_LD_PREFIX'] = path
