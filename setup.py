@@ -6,6 +6,7 @@ from distutils.core import setup
 from distutils.command.build import build as _build
 
 AFL_UNIX_INSTALL_PATH = os.path.join("bin", "afl-unix")
+AFL_UNIX_PATCH_FILE = os.path.join("patches", "afl-patch.diff")
 AFL_CGC_INSTALL_PATH = os.path.join("bin", "afl-cgc")
 SUPPORTED_ARCHES = ["aarch64", "x86_64", "i386", "arm", "ppc", "ppc64", "mips", "mips64"]
 
@@ -14,6 +15,11 @@ if not os.path.exists(AFL_UNIX_INSTALL_PATH):
     AFL_UNIX_REPO = "git@git.seclab.cs.ucsb.edu:shellphish/afl-other-arch.git"
     if subprocess.call(['git', 'clone', AFL_UNIX_REPO, AFL_UNIX_INSTALL_PATH]) != 0:
         raise LibError("Unable to retrieve afl-unix")
+
+    # apply the afl arm patch
+    with open(AFL_UNIX_PATCH_FILE, "rb") as f:
+        if subprocess.call(['patch', '-p0'], stdin=f, cwd=AFL_UNIX_INSTALL_PATH) != 0:
+            raise LibError("Unable to apply AFL patch")
 
 if not os.path.exists(AFL_CGC_INSTALL_PATH):
     AFL_CGC_REPO = "git@git.seclab.cs.ucsb.edu:cgc/driller-afl.git"
