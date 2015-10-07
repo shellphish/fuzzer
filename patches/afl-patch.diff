@@ -1,0 +1,35 @@
+--- qemu_mode/patches/elfload.diff.orig	2015-09-22 23:35:00.874888780 -0700
++++ qemu_mode/patches/elfload.diff	2015-09-22 23:35:22.346888405 -0700
+@@ -1,5 +1,5 @@
+---- qemu-2.3.0/linux-user/elfload.c.orig	2014-12-09 14:45:42.000000000 +0000
+-+++ qemu-2.3.0/linux-user/elfload.c	2015-01-28 02:51:23.719000000 +0000
++--- qemu-2.3.0/linux-user/elfload.c.orig	2015-09-22 23:32:25.018891507 -0700
+++++ qemu-2.3.0/linux-user/elfload.c	2015-09-22 23:31:42.538892250 -0700
+ @@ -28,6 +28,8 @@
+  
+  #define ELF_OSABI   ELFOSABI_SYSV
+@@ -9,16 +9,21 @@
+  /* from personality.h */
+  
+  /*
+-@@ -1889,6 +1891,8 @@
++@@ -1889,6 +1891,13 @@
+      info->brk = 0;
+      info->elf_flags = ehdr->e_flags;
+  
+-+    if (!afl_entry_point) afl_entry_point = info->entry;
+++    if (!afl_entry_point) {
+++        afl_entry_point = info->entry;
+++        /* Adjust afl_entry_point for ARM, if our entry point includes the flag for thumb mode we need to correct 
+++           the afl_entry_point to be the actual address */
+++        if (ehdr->e_machine == EM_ARM) afl_entry_point &= ~1;
+++    }
+ +
+      for (i = 0; i < ehdr->e_phnum; i++) {
+          struct elf_phdr *eppnt = phdr + i;
+          if (eppnt->p_type == PT_LOAD) {
+-@@ -1922,9 +1926,11 @@
++@@ -1922,9 +1931,11 @@
+              if (elf_prot & PROT_EXEC) {
+                  if (vaddr < info->start_code) {
+                      info->start_code = vaddr;
