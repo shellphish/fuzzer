@@ -61,6 +61,20 @@ for ARCH in SUPPORTED_ARCHES:
     TRACER_STR = os.path.join(AFL_UNIX_INSTALL_PATH, "tracers", ARCH)
     data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
 
+# for each lib export it into 
+for LIB in os.listdir("libs"):
+    OUTPUT_PATH = os.path.join("bin", "fuzzer-libs", LIB, "lib")
+    INPUT_DIR = os.path.join("libs", LIB, "lib")
+    for item in os.listdir(INPUT_DIR):
+        print item
+        # library directory transport everything
+        if os.path.isdir(os.path.join(INPUT_DIR, item)):
+            for library in os.listdir(os.path.join(INPUT_DIR, item)):
+                data_files.append((os.path.join(INPUT_DIR, item, library), os.path.join(OUTPUT_PATH, item, library)))
+        else:
+            data_files.append((os.path.join(INPUT_DIR, item), os.path.join(OUTPUT_PATH, item)))
+            
+
 # add cgc
 TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
 data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
