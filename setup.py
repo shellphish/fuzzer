@@ -66,7 +66,7 @@ TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
 data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
 
 setup(
-    name='fuzzer', version='0.1', description="Python wrapper for multiarch AFL",
+    name='fuzzer', version='1.0', description="Python wrapper for multiarch AFL",
     packages=['fuzzer'],
     data_files=data_files,
     cmdclass=cmdclass,
