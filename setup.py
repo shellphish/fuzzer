@@ -70,4 +70,5 @@ setup(
     packages=['fuzzer'],
     data_files=data_files,
     cmdclass=cmdclass,
+    install_requires=['angr']
 )
