@@ -71,7 +71,7 @@ class Fuzzer(object):
         # start the fuzzer ids at 0
         self.fuzz_id          = 0
         # test if we're resuming an old run
-        self.resuming         = bool(os.listdir(self.in_dir)) if os.path.isdir(self.in_dir) else False
+        self.resuming         = bool(os.listdir(self.out_dir)) if os.path.isdir(self.out_dir) else False
         # has the fuzzer been turned on?
         self._on = False
 
