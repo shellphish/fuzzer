@@ -33,6 +33,17 @@ class Fuzzer(object):
         self.afl_count   = afl_count
         self.seeds       = ["fuzz"] if seeds is None else seeds
 
+        # check for afl sensitive settings
+        with open("/proc/sys/kernel/core_pattern") as f:
+            if not "core" in f.read():
+                l.error("AFL Error: Pipe at the beginning of core_pattern")
+                raise InstallError("execute 'echo core | sudo tee /proc/sys/kernel/core_pattern'")
+
+        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
+            if not "performance" in f.read():
+                l.error("AFL Error: Suboptimal CPU scaling governor")
+                raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
+
         # binary id
         self.binary_id = os.path.basename(binary_path)
 
