@@ -156,8 +156,7 @@ class Fuzzer(object):
 
         alive_cnt = 0
         if self._on:
-            stats = self.stats()
-            for fuzzer in stats:
+            for fuzzer in self.stats:
                 try:
                     os.kill(int(stats[fuzzer]['fuzzer_pid']), 0)
                     alive_cnt += 1
@@ -195,9 +194,7 @@ class Fuzzer(object):
 
     def found_crash(self):
 
-        stats = self.stats()
-
-        for job in stats:
+        for job in self.stats:
             try:
                 if int(stats[job]['unique_crashes']) > 0:
                     return True
