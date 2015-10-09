@@ -158,7 +158,7 @@ class Fuzzer(object):
         if self._on:
             for fuzzer in self.stats:
                 try:
-                    os.kill(int(stats[fuzzer]['fuzzer_pid']), 0)
+                    os.kill(int(self.stats[fuzzer]['fuzzer_pid']), 0)
                     alive_cnt += 1
                 except OSError:
                     pass
@@ -196,7 +196,7 @@ class Fuzzer(object):
 
         for job in self.stats:
             try:
-                if int(stats[job]['unique_crashes']) > 0:
+                if int(self.stats[job]['unique_crashes']) > 0:
                     return True
             except KeyError:
                 pass
