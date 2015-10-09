@@ -170,6 +170,7 @@ class Fuzzer(object):
 
         self._on = False
 
+    @property
     def stats(self):
 
         # collect stats into dictionary
