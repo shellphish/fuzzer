@@ -19,11 +19,13 @@ class EarlyCrash(Exception):
 class Fuzzer(object):
     ''' Fuzzer object, spins up a fuzzing job on a binary '''
 
-    def __init__(self, binary_path, work_dir, afl_count=1, extra_opts=None, create_dictionary=False, seeds=None):
+    def __init__(self, binary_path, work_dir, afl_count=1, time_limit=None, extra_opts=None, 
+            create_dictionary=False, seeds=None):
         '''
         :param binary_path: path to the binary to fuzz
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
         :param afl_count: number of AFL jobs total to spin up for the binary
+        :param timelimit: amount of time to fuzz for, has no effect besides returning True when calling timed_out
         :param seeds: list of inputs to seed fuzzing with
         :param extra_opts: extra options to pass to AFL when starting up
         '''
@@ -31,6 +33,7 @@ class Fuzzer(object):
         self.binary_path = binary_path
         self.work_dir    = work_dir
         self.afl_count   = afl_count
+        self.time_limit  = time_limit
         self.seeds       = ["fuzz"] if seeds is None else seeds
 
         # check for afl sensitive settings
@@ -238,6 +241,11 @@ class Fuzzer(object):
                     crashes.add(f.read())
 
         return list(crashes)
+
+    def timed_out(self):
+        if self.time_limit is None:
+            return False
+        return time.time() - self.start_time > self.time_limit
 
     ### FUZZ PREP
 
