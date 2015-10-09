@@ -51,7 +51,7 @@ for LIB in os.listdir(os.path.join("bin", "fuzzer-libs")):
         # library directory transport everything
         if os.path.isdir(os.path.join(OUTPUT_DIR, item)):
             for library in os.listdir(os.path.join(OUTPUT_DIR, item)):
-                data_files.append((os.path.join(OUTPUT_DIR, item, library), (os.path.join(OUTPUT_DIR, item, library),),))
+                data_files.append((os.path.join(OUTPUT_DIR, item), (os.path.join(OUTPUT_DIR, item, library),),))
         else:
             data_files.append((OUTPUT_DIR, (os.path.join(OUTPUT_DIR, item),),))
 
