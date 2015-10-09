@@ -385,6 +385,6 @@ class Fuzzer(object):
         if directory is None:
             l.warning("architecture \"%s\" has no installed libraries", p.arch.qemu_name)
         else:
-            path = os.path.join(self.base, "libs", directory)
+            path = os.path.join(self.base, "bin", "fuzzer-libs", directory)
             l.info("exporting QEMU_LD_PREFIX of '%s'", path)
             os.environ['QEMU_LD_PREFIX'] = path
