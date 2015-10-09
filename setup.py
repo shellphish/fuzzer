@@ -9,6 +9,7 @@ AFL_UNIX_INSTALL_PATH = os.path.join("bin", "afl-unix")
 AFL_UNIX_PATCH_FILE = os.path.join("patches", "afl-patch.diff")
 AFL_CGC_INSTALL_PATH = os.path.join("bin", "afl-cgc")
 SUPPORTED_ARCHES = ["aarch64", "x86_64", "i386", "arm", "ppc", "ppc64", "mips", "mips64"]
+MULTIARCH_LIBRARY_PATH = os.path.join("bin", "fuzzer-libs")
 
 data_files = [ ]
 
@@ -28,9 +29,37 @@ if not os.path.exists(AFL_CGC_INSTALL_PATH):
     if subprocess.call(['git', 'clone', AFL_CGC_REPO, AFL_CGC_INSTALL_PATH]) != 0:
         raise LibError("Unable to retrieve afl-cgc")
 
-def _build_all():
-    global data_files
+if not os.path.exists(MULTIARCH_LIBRARY_PATH):
+    if subprocess.call(["./fetchlibs.sh"], cwd=".") != 0:
+        raise LibError("Unable to fetch libraries")
 
+AFL_UNIX_FUZZ = os.path.join(AFL_UNIX_INSTALL_PATH)
+AFL_CGC_FUZZ  = os.path.join(AFL_CGC_INSTALL_PATH)
+
+# get data_files ready for exporting, probably a better way to do this
+data_files.append((AFL_UNIX_FUZZ, (os.path.join(AFL_UNIX_FUZZ, "afl-fuzz"),),))
+data_files.append((AFL_CGC_FUZZ, (os.path.join(AFL_CGC_FUZZ, "afl-fuzz"),),))
+
+for ARCH in SUPPORTED_ARCHES:
+    TRACER_STR = os.path.join(AFL_UNIX_INSTALL_PATH, "tracers", ARCH)
+    data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
+
+# for each lib export it into data_files
+for LIB in os.listdir(os.path.join("bin", "fuzzer-libs")):
+    OUTPUT_DIR = os.path.join("bin", "fuzzer-libs", LIB, "lib")
+    for item in os.listdir(OUTPUT_DIR):
+        # library directory transport everything
+        if os.path.isdir(os.path.join(OUTPUT_DIR, item)):
+            for library in os.listdir(os.path.join(OUTPUT_DIR, item)):
+                data_files.append((os.path.join(OUTPUT_DIR, item, library), (os.path.join(OUTPUT_DIR, item, library),),))
+        else:
+            data_files.append((OUTPUT_DIR, (os.path.join(OUTPUT_DIR, item),),))
+
+# add cgc
+TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
+data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
+
+def _build_all():
     # build afls
     if subprocess.call(['./build.sh'] + SUPPORTED_ARCHES, cwd=AFL_UNIX_INSTALL_PATH) != 0:
         raise LibError("Unable to build afl-other-arch")
@@ -40,39 +69,6 @@ def _build_all():
 
     if subprocess.call(['./build_qemu_support.sh'], cwd=os.path.join(AFL_CGC_INSTALL_PATH, "qemu_mode")) != 0:
         raise LibError("Unable to build afl-cgc-qemu")
-
-    # grab libraries
-    if subprocess.call(["./fetchlibs.sh"], cwd=".") != 0:
-        raise LibError("Unable to fetch libraries")
-
-    AFL_UNIX_FUZZ = os.path.join(AFL_UNIX_INSTALL_PATH)
-    AFL_CGC_FUZZ  = os.path.join(AFL_CGC_INSTALL_PATH)
-
-    # get data_files ready for exporting, probably a better way to do this
-    data_files.append((AFL_UNIX_FUZZ, (os.path.join(AFL_UNIX_FUZZ, "afl-fuzz"))))
-    data_files.append((AFL_CGC_FUZZ, (os.path.join(AFL_CGC_FUZZ, "afl-fuzz"))))
-
-    for ARCH in SUPPORTED_ARCHES:
-        TRACER_STR = os.path.join(AFL_UNIX_INSTALL_PATH, "tracers", ARCH)
-        data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
-
-    # for each lib export it into 
-    for LIB in os.listdir("libs"):
-        OUTPUT_PATH = os.path.join("bin", "fuzzer-libs", LIB, "lib")
-        INPUT_DIR = os.path.join("libs", LIB, "lib")
-        for item in os.listdir(INPUT_DIR):
-            print item
-            # library directory transport everything
-            if os.path.isdir(os.path.join(INPUT_DIR, item)):
-                for library in os.listdir(os.path.join(INPUT_DIR, item)):
-                    data_files.append((os.path.join(INPUT_DIR, item, library), os.path.join(OUTPUT_PATH, item, library)))
-            else:
-                data_files.append((os.path.join(INPUT_DIR, item), os.path.join(OUTPUT_PATH, item)))
-                
-
-    # add cgc
-    TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
-    data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
 
 class build(_build):
     def run(self):

@@ -54,9 +54,8 @@ fetcharch() {
   extract $all_debs
 }
 
-#rm -rf libs
-mkdir -p libs
-cd libs
+mkdir -p bin/fuzzer-libs
+cd bin/fuzzer-libs
 
 LIBS="libc-bin libstdc++6"
 fetcharch armhf ubuntu trusty
