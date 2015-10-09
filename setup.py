@@ -24,10 +24,19 @@ if not os.path.exists(AFL_UNIX_INSTALL_PATH):
         if subprocess.call(['patch', '-p0'], stdin=f, cwd=AFL_UNIX_INSTALL_PATH) != 0:
             raise LibError("Unable to apply AFL patch")
 
+    if subprocess.call(['./build.sh'] + SUPPORTED_ARCHES, cwd=AFL_UNIX_INSTALL_PATH) != 0:
+        raise LibError("Unable to build afl-other-arch")
+
 if not os.path.exists(AFL_CGC_INSTALL_PATH):
     AFL_CGC_REPO = "git@git.seclab.cs.ucsb.edu:cgc/driller-afl.git"
     if subprocess.call(['git', 'clone', AFL_CGC_REPO, AFL_CGC_INSTALL_PATH]) != 0:
         raise LibError("Unable to retrieve afl-cgc")
+
+    if subprocess.call(['make'], cwd=AFL_CGC_INSTALL_PATH) != 0:
+        raise LibError("Unable to make afl-cgc")
+
+    if subprocess.call(['./build_qemu_support.sh'], cwd=os.path.join(AFL_CGC_INSTALL_PATH, "qemu_mode")) != 0:
+        raise LibError("Unable to build afl-cgc-qemu")
 
 if not os.path.exists(MULTIARCH_LIBRARY_PATH):
     if subprocess.call(["./fetchlibs.sh"], cwd=".") != 0:
@@ -59,27 +68,9 @@ for LIB in os.listdir(os.path.join("bin", "fuzzer-libs")):
 TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
 data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
 
-def _build_all():
-    # build afls
-    if subprocess.call(['./build.sh'] + SUPPORTED_ARCHES, cwd=AFL_UNIX_INSTALL_PATH) != 0:
-        raise LibError("Unable to build afl-other-arch")
-
-    if subprocess.call(['make'], cwd=AFL_CGC_INSTALL_PATH) != 0:
-        raise LibError("Unable to make afl-cgc")
-
-    if subprocess.call(['./build_qemu_support.sh'], cwd=os.path.join(AFL_CGC_INSTALL_PATH, "qemu_mode")) != 0:
-        raise LibError("Unable to build afl-cgc-qemu")
-
-class build(_build):
-    def run(self):
-            self.execute(_build_all, (), msg="Building AFL and grabbing libraries")
-            _build.run(self)
-cmdclass = {'build': build}
-
 setup(
     name='fuzzer', version='1.0', description="Python wrapper for multiarch AFL",
     packages=['fuzzer'],
     data_files=data_files,
-    cmdclass=cmdclass,
     install_requires=['angr']
 )
