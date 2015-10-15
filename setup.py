@@ -32,7 +32,7 @@ if not os.path.exists(AFL_CGC_INSTALL_PATH):
     if subprocess.call(['git', 'clone', AFL_CGC_REPO, AFL_CGC_INSTALL_PATH]) != 0:
         raise LibError("Unable to retrieve afl-cgc")
 
-    if subprocess.call(['make'], cwd=AFL_CGC_INSTALL_PATH) != 0:
+    if subprocess.call(['make', '-j'], cwd=AFL_CGC_INSTALL_PATH) != 0:
         raise LibError("Unable to make afl-cgc")
 
     if subprocess.call(['./build_qemu_support.sh'], cwd=os.path.join(AFL_CGC_INSTALL_PATH, "qemu_mode")) != 0:
@@ -64,11 +64,12 @@ for LIB in os.listdir(os.path.join("bin", "fuzzer-libs")):
         else:
             data_files.append((OUTPUT_DIR, (os.path.join(OUTPUT_DIR, item),),))
 
-data.files.append(("bin", (os.path.join("bin", "create_dict.py"),),),)
-
 # add cgc
 TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
 data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
+
+# add create_dict
+data_files.append(("bin", (os.path.join("bin", "create_dict.py"),),),)
 
 setup(
     name='fuzzer', version='1.0', description="Python wrapper for multiarch AFL",
