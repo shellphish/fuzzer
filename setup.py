@@ -64,6 +64,8 @@ for LIB in os.listdir(os.path.join("bin", "fuzzer-libs")):
         else:
             data_files.append((OUTPUT_DIR, (os.path.join(OUTPUT_DIR, item),),))
 
+data.files.append(("bin", (os.path.join("bin", "create_dict.py"),),),)
+
 # add cgc
 TRACER_STR = os.path.join(AFL_CGC_INSTALL_PATH, "tracers", "i386")
 data_files.append((TRACER_STR, (os.path.join(TRACER_STR, "afl-qemu-trace"),),))
