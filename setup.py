@@ -15,7 +15,7 @@ data_files = [ ]
 
 # grab the afl-other-arch repo
 if not os.path.exists(AFL_UNIX_INSTALL_PATH):
-    AFL_UNIX_REPO = "git@git.seclab.cs.ucsb.edu:shellphish/afl-other-arch.git"
+    AFL_UNIX_REPO = "git@git.seclab.cs.ucsb.edu:cgc/afl-other-arch.git"
     if subprocess.call(['git', 'clone', AFL_UNIX_REPO, AFL_UNIX_INSTALL_PATH]) != 0:
         raise LibError("Unable to retrieve afl-unix")
 
