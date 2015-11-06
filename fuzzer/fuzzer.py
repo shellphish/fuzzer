@@ -378,6 +378,8 @@ class Fuzzer(object):
             directory = "i386"
         if p.arch.qemu_name == "mips":
             directory = "mips"
+        if p.arch.qemu_name == "mipsel":
+            directory = "mipsel"
         if p.arch.qemu_name == "ppc":
             directory = "powerpc"
         if p.arch.qemu_name == "arm":
