@@ -19,22 +19,24 @@ class EarlyCrash(Exception):
 class Fuzzer(object):
     ''' Fuzzer object, spins up a fuzzing job on a binary '''
 
-    def __init__(self, binary_path, work_dir, afl_count=1, time_limit=None, extra_opts=None, 
-            create_dictionary=False, seeds=None):
+    def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None,
+            extra_opts=None, create_dictionary=False, seeds=None):
         '''
         :param binary_path: path to the binary to fuzz
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
         :param afl_count: number of AFL jobs total to spin up for the binary
+        :param library_path: library path to use, if none is specified a default is chosen
         :param timelimit: amount of time to fuzz for, has no effect besides returning True when calling timed_out
         :param seeds: list of inputs to seed fuzzing with
         :param extra_opts: extra options to pass to AFL when starting up
         '''
 
-        self.binary_path = binary_path
-        self.work_dir    = work_dir
-        self.afl_count   = afl_count
-        self.time_limit  = time_limit
-        self.seeds       = ["fuzz"] if seeds is None else seeds
+        self.binary_path  = binary_path
+        self.work_dir     = work_dir
+        self.afl_count    = afl_count
+        self.time_limit   = time_limit
+        self.library_path = library_path
+        self.seeds        = ["fuzz"] if seeds is None else seeds
 
         # check for afl sensitive settings
         with open("/proc/sys/kernel/core_pattern") as f:
@@ -370,29 +372,35 @@ class Fuzzer(object):
         '''
         export the correct library path for a given architecture
         '''
+        path = None
 
-        directory = None
-        if p.arch.qemu_name == "aarch64":
-            directory = "arm64"
-        if p.arch.qemu_name == "i386":
-            directory = "i386"
-        if p.arch.qemu_name == "mips":
-            directory = "mips"
-        if p.arch.qemu_name == "mipsel":
-            directory = "mipsel"
-        if p.arch.qemu_name == "ppc":
-            directory = "powerpc"
-        if p.arch.qemu_name == "arm":
-            # some stuff qira uses to determine the which libs to use for arm
-            progdata = open(self.binary_path, "rb").read(0x800)
-            if "/lib/ld-linux.so.3" in progdata:
-                directory = "armel"
-            elif "/lib/ld-linux-armhf.so.3" in progdata:
-                directory = "armhf"
+        if self.library_path is None:
+            directory = None
+            if p.arch.qemu_name == "aarch64":
+                directory = "arm64"
+            if p.arch.qemu_name == "i386":
+                directory = "i386"
+            if p.arch.qemu_name == "mips":
+                directory = "mips"
+            if p.arch.qemu_name == "mipsel":
+                directory = "mipsel"
+            if p.arch.qemu_name == "ppc":
+                directory = "powerpc"
+            if p.arch.qemu_name == "arm":
+                # some stuff qira uses to determine the which libs to use for arm
+                progdata = open(self.binary_path, "rb").read(0x800)
+                if "/lib/ld-linux.so.3" in progdata:
+                    directory = "armel"
+                elif "/lib/ld-linux-armhf.so.3" in progdata:
+                    directory = "armhf"
 
-        if directory is None:
-            l.warning("architecture \"%s\" has no installed libraries", p.arch.qemu_name)
+            if directory is None:
+                l.warning("architecture \"%s\" has no installed libraries", p.arch.qemu_name)
+            else:
+                path = os.path.join(self.base, "bin", "fuzzer-libs", directory)
         else:
-            path = os.path.join(self.base, "bin", "fuzzer-libs", directory)
+            path = self.library_path
+
+        if path is not None:
             l.debug("exporting QEMU_LD_PREFIX of '%s'", path)
             os.environ['QEMU_LD_PREFIX'] = path
