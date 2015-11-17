@@ -8,7 +8,7 @@ from distutils.command.build import build as _build
 AFL_UNIX_INSTALL_PATH = os.path.join("bin", "afl-unix")
 AFL_UNIX_PATCH_FILE = os.path.join("patches", "afl-patch.diff")
 AFL_CGC_INSTALL_PATH = os.path.join("bin", "afl-cgc")
-SUPPORTED_ARCHES = ["aarch64", "x86_64", "i386", "arm", "ppc", "ppc64", "mips", "mips64"]
+SUPPORTED_ARCHES = ["aarch64", "x86_64", "i386", "arm", "ppc", "ppc64", "mips", "mipsel", "mips64"]
 MULTIARCH_LIBRARY_PATH = os.path.join("bin", "fuzzer-libs")
 
 data_files = [ ]
