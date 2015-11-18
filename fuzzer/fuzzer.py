@@ -20,7 +20,8 @@ class Fuzzer(object):
     ''' Fuzzer object, spins up a fuzzing job on a binary '''
 
     def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None,
-            extra_opts=None, create_dictionary=False, seeds=None):
+            target_opts=None, extra_opts=None, create_dictionary=False,
+            seeds=None):
         '''
         :param binary_path: path to the binary to fuzz
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
@@ -28,15 +29,17 @@ class Fuzzer(object):
         :param library_path: library path to use, if none is specified a default is chosen
         :param timelimit: amount of time to fuzz for, has no effect besides returning True when calling timed_out
         :param seeds: list of inputs to seed fuzzing with
+        :param target_opts: extra options to pass to the target
         :param extra_opts: extra options to pass to AFL when starting up
         '''
 
-        self.binary_path  = binary_path
-        self.work_dir     = work_dir
-        self.afl_count    = afl_count
-        self.time_limit   = time_limit
-        self.library_path = library_path
-        self.seeds        = ["fuzz"] if seeds is None else seeds
+        self.binary_path    = binary_path
+        self.work_dir       = work_dir
+        self.afl_count      = afl_count
+        self.time_limit     = time_limit
+        self.library_path   = library_path
+        self.target_opts    = [ ] if target_opts is None else target_opts
+        self.seeds          = ["fuzz"] if seeds is None else seeds
 
         # check for afl sensitive settings
         with open("/proc/sys/kernel/core_pattern") as f:
@@ -325,6 +328,8 @@ class Fuzzer(object):
             args += self.extra_opts
 
         args += ["--", self.binary_path]
+
+        args.extend(self.target_opts)
 
         l.debug("execing: %s > %s", ' '.join(args), outfile)
 
