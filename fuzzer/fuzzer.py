@@ -209,12 +209,43 @@ class Fuzzer(object):
         return False
 
     def add_fuzzer(self):
+        '''
+        add one fuzzer
+        '''
 
         self.procs.append(self._start_afl_instance())
 
     def add_fuzzers(self, n):
         for _ in range(n):
             self.add_fuzzer()
+
+    def remove_fuzzer(self):
+        '''
+        remove one fuzzer
+        '''
+
+        try:
+            f = self.procs.pop()
+        except IndexError:
+            l.error("no fuzzer to remove")
+            raise ValueError("no fuzzer to remove")
+
+        f.kill()
+
+    def remove_fuzzers(self, n):
+        '''
+        remove multiple fuzzers
+        '''
+
+        if n > len(self.procs):
+            l.error("not more than %u fuzzers to remove", n)
+            raise ValueError("not more than %u fuzzers to remove" % n)
+
+        if n == len(self.procs):
+            l.warning("removing all fuzzers")
+
+        for _ in range(n):
+            self.remove_fuzzer()
 
     def crashes(self):
         '''
