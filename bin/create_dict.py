@@ -25,7 +25,7 @@ def hexescape(s):
 def create(binary, outfile):
 
     b = angr.Project(binary, load_options={'auto_load_libs': False})
-    cfg = b.analyses.CFG(keep_input_state=True)
+    cfg = b.analyses.CFG(keep_state=True)
 
     string_references = [ ]
     for f in cfg.function_manager.functions.values():
@@ -55,6 +55,7 @@ def main(argv):
 
     if len(argv) < 3:
         l.error("incorrect number of arguments passed to create_dict")
+        print "usage: %s <binary> <output-dictionary>" % sys.argv[0]
         return 1
 
     binary  = argv[1]
