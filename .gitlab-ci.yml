@@ -1,12 +1,10 @@
 before_script:
     - angr-test sync hard
 
-driller:
-    script: "angr-test driller"
-    tags:
-        - "angr"
+fuzzer:
+    script: "angr-test fuzzer"
+    tags: [angr]
 
-fuzzer_lint:
+lint:
     script: "angr-test lint"
-    tags:
-        - "angr"
+    tags: [angr]
