@@ -1,6 +1,7 @@
 import nose
 import tempfile
 import subprocess
+import fuzzer
 
 import logging
 l = logging.getLogger("fuzzer.tests.test_fuzzer")
