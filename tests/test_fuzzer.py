@@ -7,7 +7,7 @@ import logging
 l = logging.getLogger("fuzzer.tests.test_fuzzer")
 
 import os
-bin_location = str(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../binaries'))
+bin_location = str(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../binaries-private'))
 fuzzer_bin = str(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../bin'))
 
 def test_dictionary_creation_cgc():
