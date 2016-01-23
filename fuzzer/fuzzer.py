@@ -275,6 +275,20 @@ class Fuzzer(object):
 
         return list(crashes)
 
+    def queue(self, fuzzer='fuzzer-master'):
+        '''
+        retrieve the current queue of inputs from a fuzzer
+        :return: a list of strings which represent a fuzzer's queue
+        '''
+
+        if not fuzzer in os.listdir(self.out_dir):
+            raise ValueError("fuzzer '%s' does not exist" % fuzzer)
+
+        queue_path = os.path.join(self.out_dir, fuzzer, 'queue')
+        queue_files = filter(lambda x: x != ".state", os.listdir(queue_path))
+
+        return map(lambda f: open(os.path.join(queue_path, f)).read(), queue_files)
+
     def timed_out(self):
         if self.time_limit is None:
             return False
