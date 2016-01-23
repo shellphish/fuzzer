@@ -289,6 +289,19 @@ class Fuzzer(object):
 
         return map(lambda f: open(os.path.join(queue_path, f)).read(), queue_files)
 
+    def bitmap(self, fuzzer='fuzzer-master'):
+        '''
+        retrieve the bitmap for the fuzzer `fuzzer`.
+        :return: a string containing the contents of the bitmap.
+        '''
+
+        if not fuzzer in os.listdir(self.out_dir):
+            raise ValueError("fuzzer '%s' does not exist" % fuzzer)
+
+        bitmap_path = os.path.join(self.out_dir, fuzzer, "fuzz_bitmap")
+
+        return open(bitmap_path).read()
+
     def timed_out(self):
         if self.time_limit is None:
             return False
