@@ -253,9 +253,6 @@ class Fuzzer(object):
         :return: a list of strings which are crashing inputs
         '''
 
-        if not self.found_crash():
-            return [ ]
-
         crashes = set()
         for fuzzer in os.listdir(self.out_dir):
             crashes_dir = os.path.join(self.out_dir, fuzzer, "crashes")
