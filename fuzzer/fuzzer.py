@@ -41,6 +41,10 @@ class Fuzzer(object):
         self.target_opts    = [ ] if target_opts is None else target_opts
         self.seeds          = ["fuzz"] if seeds is None else seeds
 
+        # fix case of being passed an empty list
+        if len(self.seeds) == 0:
+            self.seeds = ["fuzz"]
+
         # check for afl sensitive settings
         with open("/proc/sys/kernel/core_pattern") as f:
             if not "core" in f.read():
