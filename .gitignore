@@ -1,0 +1,8 @@
+*.pyc
+/dist/
+/*.egg-info
+/.coverage
+/cover
+/bin/afl-cgc/
+/bin/afl-unix/
+/bin/fuzzer-libs/
