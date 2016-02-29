@@ -311,7 +311,7 @@ class Fuzzer(object):
         :param testcases: list of strings representing new inputs to introduce
         '''
 
-        nectary_queue_directory = os.path.join(self.out_dir, 'nectary', 'queue')
+        nectary_queue_directory = os.path.join(self.out_dir, 'pollen', 'queue')
         if not 'nectary' in os.listdir(self.out_dir):
             os.makedirs(nectary_queue_directory)
 
