@@ -304,6 +304,23 @@ class Fuzzer(object):
             return False
         return time.time() - self.start_time > self.time_limit
 
+    def pollenate(self, testcases):
+        '''
+        pollenate a fuzzing job with new testcases
+        '''
+
+        nectary_queue_directory = os.path.join(self.out_dir, 'nectary', 'queue')
+        if not 'nectary' in os.listdir(self.out_dir):
+            os.makedirs(nectary_queue_directory)
+
+        pollen_cnt = len(os.listdir(nectary_queue_directory))
+
+        for tcase in testcases:
+            with open(os.path.join(nectary_queue_directory, "id:%06d,src:pollenation" % pollen_cnt), "w") as f:
+                f.write(tcase)
+
+            pollen_cnt += 1
+
     ### FUZZ PREP
 
     def _initialize_seeds(self):
