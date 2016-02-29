@@ -53,6 +53,12 @@ class Fuzzer(object):
                 l.error("AFL Error: Suboptimal CPU scaling governor")
                 raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
 
+        # TODO: test, to be sure it doesn't mess things up
+        with open("/proc/sys/kernel/sched_child_runs_first") as f:
+            if not "1" in f.read():
+                l.error("AFL Warning: We probably want the fork() children to run first")
+                raise InstallError("execute 'echo 1 | sudo tee /proc/sys/kernel/sched_child_runs_first'")
+
         # binary id
         self.binary_id = os.path.basename(binary_path)
 
