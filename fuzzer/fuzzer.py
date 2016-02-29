@@ -307,6 +307,8 @@ class Fuzzer(object):
     def pollenate(self, testcases):
         '''
         pollenate a fuzzing job with new testcases
+
+        :param testcases: list of strings representing new inputs to introduce
         '''
 
         nectary_queue_directory = os.path.join(self.out_dir, 'nectary', 'queue')
