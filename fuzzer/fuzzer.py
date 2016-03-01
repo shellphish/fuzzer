@@ -312,7 +312,7 @@ class Fuzzer(object):
         '''
 
         nectary_queue_directory = os.path.join(self.out_dir, 'pollen', 'queue')
-        if not 'nectary' in os.listdir(self.out_dir):
+        if not 'pollen' in os.listdir(self.out_dir):
             os.makedirs(nectary_queue_directory)
 
         pollen_cnt = len(os.listdir(nectary_queue_directory))
