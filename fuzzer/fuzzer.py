@@ -1,6 +1,7 @@
 import os
 import time
 import angr
+import signal
 import tempfile
 import subprocess
 
@@ -247,11 +248,14 @@ class Fuzzer(object):
         for _ in range(n):
             self.remove_fuzzer()
 
-    def crashes(self):
-        '''
-        retrieve the crashes discovered by AFL
+    def _get_crashing_inputs(self, signals):
+        """
+        Retrieve the crashes discovered by AFL. Only return those crashes which
+        recieved a signal within 'signals' as the kill signal.
+
+        :param signals: list of valid kill signal numbers
         :return: a list of strings which are crashing inputs
-        '''
+        """
 
         crashes = set()
         for fuzzer in os.listdir(self.out_dir):
@@ -266,11 +270,47 @@ class Fuzzer(object):
                     # skip the readme entry
                     continue
 
+                attrs = dict(map(lambda x: x.split(":"), crash.split(",")))
+
+                if int(attrs['sig']) not in signals:
+                    continue
+
                 crash_path = os.path.join(crashes_dir, crash)
                 with open(crash_path, 'rb') as f:
                     crashes.add(f.read())
 
         return list(crashes)
+
+    def crashes(self):
+        """
+        Retrieve the crashes discovered by AFL. Since we are now detecting flag
+        page leaks (via SIGUSR1) we will not return these leaks as crashes.
+        Instead, these 'crashes' can be found with the leaks function.
+        :return: a list of strings which are crashing inputs
+        """
+
+        return self._get_crashing_inputs([signal.SIGSEGV, signal.SIGILL])
+
+    def leaks(self):
+        """
+        Retrieve the leaks discovered by AFL. This function will only return
+        inputs discovered by AFL which recieved a SIGUSR1. Indicating the
+        input triggered our dumb flag detection within QEMU.
+        :return: a list of strings which cause an information leak to occur
+        """
+
+        return self._get_crashing_inputs([signal.SIGUSR1])
+
+    def triggering_inputs(self):
+        """
+        Retrieves a list of all the 'crashes' AFL has seen. Each one of these
+        should demonstrate a vulnerability.
+        :return: a list of strings which indicate a vulnerability
+        """
+
+        return self._get_crashing_inputs(
+                [signal.SIGSEGV, signal.SIGILL, signal.SIGUSR1]
+                )
 
     def queue(self, fuzzer='fuzzer-master'):
         '''
