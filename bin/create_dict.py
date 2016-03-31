@@ -7,12 +7,13 @@ import logging
 
 l = logging.getLogger("create_dict")
 
+
 def hexescape(s):
     '''
     perform hex escaping on a raw string s
     '''
 
-    out = [ ]
+    out = []
     acceptable = string.letters + string.digits + " ."
     for c in s:
         if c not in acceptable:
@@ -22,34 +23,39 @@ def hexescape(s):
 
     return ''.join(out)
 
+
 def create(binary, outfile):
 
     b = angr.Project(binary, load_options={'auto_load_libs': False})
     cfg = b.analyses.CFG(keep_state=True)
 
-    string_references = [ ]
-    for f in cfg.function_manager.functions.values():
+    string_references = []
+    for f in cfg.functions.values():
         try:
             string_references.append(f.string_references())
         except ZeroDivisionError:
             pass
 
     string_references = sum(string_references, [])
-
     strings = [] if len(string_references) == 0 else zip(*string_references)[1]
 
-    valid_strings = filter(lambda s: len(s) <= 128 and len(s) > 0, strings)
-    if len(valid_strings) > 0:
-        with open(outfile, 'wb') as f:
-            for i, s in enumerate(valid_strings):
+    valid_strings = []
+    if len(strings) > 0:
+        for s in strings:
+            if len(s) <= 128:
+                valid_strings.append(s)
+            for s_atom in s.split():
                 # AFL has a limit of 128 bytes per dictionary entries
-                if len(s) <= 128:
-                    esc_s = hexescape(s)
-                    f.write("string_%d=\"%s\"\n" % (i, esc_s))
+                if len(s_atom) <= 128:
+                    valid_strings.append(s_atom)
 
-        return True
+    with open(outfile, 'w') as f:
+        for i, s in enumerate(set(valid_strings)):
+            s_val = hexescape(s)
+            f.write("string_%d=\"%s\"\n" % (i, s_val))
 
-    return False
+    return bool(len(valid_strings))
+
 
 def main(argv):
 
@@ -58,7 +64,7 @@ def main(argv):
         print "usage: %s <binary> <output-dictionary>" % sys.argv[0]
         return 1
 
-    binary  = argv[1]
+    binary = argv[1]
     outfile = argv[2]
 
     return int(not create(binary, outfile))
