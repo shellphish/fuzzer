@@ -24,7 +24,7 @@ class Fuzzer(object):
             target_opts=None, extra_opts=None, create_dictionary=False,
             seeds=None):
         '''
-        :param binary_path: path to the binary to fuzz
+        :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
         :param afl_count: number of AFL jobs total to spin up for the binary
         :param library_path: library path to use, if none is specified a default is chosen
@@ -59,8 +59,14 @@ class Fuzzer(object):
                 l.error("AFL Warning: We probably want the fork() children to run first")
                 raise InstallError("execute 'echo 1 | sudo tee /proc/sys/kernel/sched_child_runs_first'")
 
-        # binary id
-        self.binary_id = os.path.basename(binary_path)
+        if isinstance(binary_path,basestring):
+            self.is_multicb = False
+            self.binary_id = os.path.basename(binary_path)
+        elif isinstance(binary_path,(list,tuple)):
+            self.is_multicb = True
+            self.binary_id = os.path.basename(binary_path[0])
+        else:
+            raise ValueError("Was expecting either a string or a list/tuple for binary_path! It's {} instead.".format(type(binary_path)))
 
         self.job_dir  = os.path.join(self.work_dir, self.binary_id)
         self.in_dir   = os.path.join(self.job_dir, "input")
@@ -90,15 +96,27 @@ class Fuzzer(object):
         # has the fuzzer been turned on?
         self._on = False
 
-        # the AFL build path for afl-qemu-trace-*
-        p = angr.Project(binary_path)
-        tracer_dir            = p.arch.qemu_name
-        afl_dir               = "afl-%s" % p.loader.main_bin.os
 
-        # the path to AFL capable of calling driller
-        self.afl_path         = os.path.join(self.base, "bin", afl_dir, "afl-fuzz")
+        if self.is_multicb:
+            # Where cgc/setup's Dockerfile checks it out
+            # NOTE: 'afl/fakeforksrv' serves as 'qemu', as far as AFL is concerned
+            #       Will actually invoke 'fakeforksrv/multicb-qemu'
+            #       This QEMU cannot run standalone (always speaks the forkserver "protocol"),
+            #       but 'fakeforksrv/run_via_fakeforksrv' allows it.
+            # XXX: There is no driller/angr support, and probably will never be.
+            self.afl_path = os.path.expanduser('~/multiafl/afl/afl-fuzz')
+            self.afl_path_var = self.afl_path
+        else:
+            # the AFL build path for afl-qemu-trace-*
+            p = angr.Project(binary_path)
+            tracer_dir            = p.arch.qemu_name
+            afl_dir               = "afl-%s" % p.loader.main_bin.os
 
-        self.afl_path_var     = os.path.join(self.base, "bin", afl_dir, "tracers", tracer_dir)
+            # the path to AFL capable of calling driller
+            self.afl_path         = os.path.join(self.base, "bin", afl_dir, "afl-fuzz")
+
+            self.afl_path_var     = os.path.join(self.base, "bin", afl_dir, "tracers", tracer_dir)
+
         self.qemu_dir         = self.afl_path_var
 
         l.debug("self.start_time: %r", self.start_time)
@@ -388,6 +406,10 @@ class Fuzzer(object):
     ### DICTIONARY CREATION
 
     def _create_dict(self, dict_file):
+        if self.is_multicb:
+            # TODO: Create for each CB and merge? Or just discard the string IDs and concatenate
+            l.warning("Not trying to create the dictionary for multi-CBs")
+            return False
 
         l.debug("creating a dictionary of string references within binary \"%s\"",
                 self.binary_id)
@@ -402,6 +424,10 @@ class Fuzzer(object):
     ### BEHAVIOR TESTING
 
     def _crash_test(self):
+        if self.is_multicb:
+            # TODO: Use run_via_fakeforksrv? Note that afl already does this check at the beginning.
+            l.warning("Not trying _crash_test for multi-CBs, would need to adapt.")
+            return False
 
         args = [os.path.join(self.qemu_dir, "afl-qemu-trace"), self.binary_path]
 
@@ -447,7 +473,8 @@ class Fuzzer(object):
         if self.extra_opts is not None:
             args += self.extra_opts
 
-        args += ["--", self.binary_path]
+        args += ["--"]
+        args += self.binary_path if self.is_multicb else [self.binary_path]
 
         args.extend(self.target_opts)
 
