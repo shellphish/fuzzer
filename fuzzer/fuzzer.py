@@ -19,7 +19,7 @@ class Fuzzer(object):
 
     def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None,
             target_opts=None, extra_opts=None, create_dictionary=False,
-            seeds=None):
+            seeds=None, crash_mode=False):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
@@ -29,6 +29,7 @@ class Fuzzer(object):
         :param seeds: list of inputs to seed fuzzing with
         :param target_opts: extra options to pass to the target
         :param extra_opts: extra options to pass to AFL when starting up
+        :param crash_mode: if set to True AFL is set to crash explorer mode, and seed will be expected to be a crashing input
         '''
 
         self.binary_path    = binary_path
@@ -37,7 +38,7 @@ class Fuzzer(object):
         self.time_limit     = time_limit
         self.library_path   = library_path
         self.target_opts    = [ ] if target_opts is None else target_opts
-        self.seeds          = ["fuzz"] if seeds is None or len(seeds) == 0 else seeds
+        self.crash_mode     = crash_mode
 
         # check for afl sensitive settings
         with open("/proc/sys/kernel/core_pattern") as f:
@@ -64,6 +65,14 @@ class Fuzzer(object):
             self.binary_id = os.path.basename(binary_path[0])
         else:
             raise ValueError("Was expecting either a string or a list/tuple for binary_path! It's {} instead.".format(type(binary_path)))
+
+        # sanity check crash mode
+        if self.crash_mode:
+            if seeds is None:
+                raise ValueError("Seeds must be specified if using the fuzzer in crash mode")
+            l.info("AFL will be started in crash mode")
+
+        self.seeds          = ["fuzz"] if seeds is None or len(seeds) == 0 else seeds
 
         self.job_dir  = os.path.join(self.work_dir, self.binary_id)
         self.in_dir   = os.path.join(self.job_dir, "input")
@@ -417,6 +426,10 @@ class Fuzzer(object):
         args += ["-o", self.out_dir]
         args += ["-m", memory]
         args += ["-Q"]
+
+        if self.crash_mode:
+            args += ["-C"]
+
         if self.fuzz_id == 0:
             args += ["-M", "fuzzer-master"]
             outfile = "fuzzer-master.log"
