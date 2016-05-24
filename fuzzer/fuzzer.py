@@ -14,9 +14,6 @@ config = { }
 class InstallError(Exception):
     pass
 
-class EarlyCrash(Exception):
-    pass
-
 class Fuzzer(object):
     ''' Fuzzer object, spins up a fuzzing job on a binary '''
 
@@ -170,10 +167,6 @@ class Fuzzer(object):
         start fuzzing
         '''
 
-        # test to see if the binary is so bad it crashes on our test case
-        if self._crash_test():
-            raise EarlyCrash
-
         # spin up the AFL workers
         self._start_afl()
 
@@ -224,14 +217,7 @@ class Fuzzer(object):
 
     def found_crash(self):
 
-        for job in self.stats:
-            try:
-                if int(self.stats[job]['unique_crashes']) > 0:
-                    return True
-            except KeyError:
-                pass
-
-        return False
+        return len(self.crashes()) > 0
 
     def add_fuzzer(self):
         '''
@@ -420,35 +406,6 @@ class Fuzzer(object):
         retcode = p.wait()
 
         return True if retcode == 0 else False
-
-    ### BEHAVIOR TESTING
-
-    def _crash_test(self):
-        if self.is_multicb:
-            # TODO: Use run_via_fakeforksrv? Note that afl already does this check at the beginning.
-            l.warning("Not trying _crash_test for multi-CBs, would need to adapt.")
-            return False
-
-        args = [os.path.join(self.qemu_dir, "afl-qemu-trace"), self.binary_path]
-
-        fd, jfile = tempfile.mkstemp()
-        os.close(fd)
-
-        with open(jfile, 'w') as f:
-            f.write("fuzz")
-
-        with open(jfile, 'r') as i:
-            with open('/dev/null', 'w') as o:
-                p = subprocess.Popen(args, stdin=i, stdout=o)
-                p.wait()
-
-                if p.poll() < 0:
-                    ret = True
-                else:
-                    ret = False
-
-        os.remove(jfile)
-        return ret
 
     ### AFL SPAWNERS
 
