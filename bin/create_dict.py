@@ -27,7 +27,7 @@ def hexescape(s):
 def create(binary, outfile):
 
     b = angr.Project(binary, load_options={'auto_load_libs': False})
-    cfg = b.analyses.CFG(keep_state=True)
+    cfg = b.analyses.CFGAccurate(keep_state=True)
 
     string_references = []
     for f in cfg.functions.values():
