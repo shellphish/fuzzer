@@ -289,7 +289,7 @@ class Fuzzer(object):
                     # skip the readme entry
                     continue
 
-                attrs = dict(map(lambda x: x.split(":"), crash.split(",")))
+                attrs = dict(map(lambda x: (x[0], x[-1]), map(lambda y: y.split(":"), crash.split(","))))
 
                 if int(attrs['sig']) not in signals:
                     continue
