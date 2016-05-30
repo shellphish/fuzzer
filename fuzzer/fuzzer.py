@@ -40,22 +40,7 @@ class Fuzzer(object):
         self.target_opts    = [ ] if target_opts is None else target_opts
         self.crash_mode     = crash_mode
 
-        # check for afl sensitive settings
-        with open("/proc/sys/kernel/core_pattern") as f:
-            if not "core" in f.read():
-                l.error("AFL Error: Pipe at the beginning of core_pattern")
-                raise InstallError("execute 'echo core | sudo tee /proc/sys/kernel/core_pattern'")
-
-        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
-            if not "performance" in f.read():
-                l.error("AFL Error: Suboptimal CPU scaling governor")
-                raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
-
-        # TODO: test, to be sure it doesn't mess things up
-        with open("/proc/sys/kernel/sched_child_runs_first") as f:
-            if not "1" in f.read():
-                l.error("AFL Warning: We probably want the fork() children to run first")
-                raise InstallError("execute 'echo 1 | sudo tee /proc/sys/kernel/sched_child_runs_first'")
+        Fuzzer._perform_env_checks()
 
         if isinstance(binary_path,basestring):
             self.is_multicb = False
@@ -85,8 +70,7 @@ class Fuzzer(object):
                 raise ValueError("extra_opts must be a list of command line arguments")
 
         # base of the fuzzer package
-        self.base = os.path.dirname(__file__)
-        self._adjust_base()
+        self.base = Fuzzer._get_base()
 
         self.start_time       = int(time.time())
         # create_dict script
@@ -478,17 +462,40 @@ class Fuzzer(object):
 
     ### UTIL
 
-    def _adjust_base(self):
+    @staticmethod
+    def _perform_env_checks():
+        # check for afl sensitive settings
+        with open("/proc/sys/kernel/core_pattern") as f:
+            if not "core" in f.read():
+                l.error("AFL Error: Pipe at the beginning of core_pattern")
+                raise InstallError("execute 'echo core | sudo tee /proc/sys/kernel/core_pattern'")
+
+        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
+            if not "performance" in f.read():
+                l.error("AFL Error: Suboptimal CPU scaling governor")
+                raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
+
+        # TODO: test, to be sure it doesn't mess things up
+        with open("/proc/sys/kernel/sched_child_runs_first") as f:
+            if not "1" in f.read():
+                l.error("AFL Warning: We probably want the fork() children to run first")
+                raise InstallError("execute 'echo 1 | sudo tee /proc/sys/kernel/sched_child_runs_first'")
+
+    @staticmethod
+    def _get_base():
         '''
-        adjust self.base to point to the directory containing bin, there should always be a directory
+        find the directory containing bin, there should always be a directory
         containing bin below base intially
         '''
+        base = os.path.dirname(__file__)
 
-        while not "bin" in os.listdir(self.base) and os.path.abspath(self.base) != "/":
-            self.base = os.path.join(self.base, "..")
+        while not "bin" in os.listdir(base) and os.path.abspath(base) != "/":
+            base = os.path.join(base, "..")
 
-        if os.path.abspath(self.base) == "/":
+        if os.path.abspath(base) == "/":
             raise InstallError("could not find afl install directory")
+
+        return base
 
     def _export_library_path(self, p):
         '''
