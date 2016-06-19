@@ -2,7 +2,6 @@ import os
 import time
 import angr
 import signal
-import tempfile
 import subprocess
 
 import logging
