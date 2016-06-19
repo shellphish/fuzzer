@@ -2,7 +2,6 @@ import os
 import time
 import angr
 import signal
-import tempfile
 import subprocess
 
 import logging
@@ -293,27 +292,6 @@ class Fuzzer(object):
         """
 
         return self._get_crashing_inputs([signal.SIGSEGV, signal.SIGILL])
-
-    def leaks(self):
-        """
-        Retrieve the leaks discovered by AFL. This function will only return
-        inputs discovered by AFL which recieved a SIGUSR1. Indicating the
-        input triggered our dumb flag detection within QEMU.
-        :return: a list of strings which cause an information leak to occur
-        """
-
-        return self._get_crashing_inputs([signal.SIGUSR1])
-
-    def triggering_inputs(self):
-        """
-        Retrieves a list of all the 'crashes' AFL has seen. Each one of these
-        should demonstrate a vulnerability.
-        :return: a list of strings which indicate a vulnerability
-        """
-
-        return self._get_crashing_inputs(
-                [signal.SIGSEGV, signal.SIGILL, signal.SIGUSR1]
-                )
 
     def queue(self, fuzzer='fuzzer-master'):
         '''
