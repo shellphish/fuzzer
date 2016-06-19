@@ -27,16 +27,16 @@ def hexescape(s):
 def create(binary, outfile):
 
     b = angr.Project(binary, load_options={'auto_load_libs': False})
-    cfg = b.analyses.CFGAccurate(keep_state=True)
+    cfg = b.analyses.CFG(resolve_indirect_jumps=True, collect_data_references=True)
+
+    state = b.factory.blank_state()
 
     string_references = []
-    for f in cfg.functions.values():
-        try:
-            string_references.append(f.string_references())
-        except ZeroDivisionError:
-            pass
+    for v in cfg._memory_data.values():
+        if v.sort == "string" and v.size > 1:
+            st = state.se.any_str(state.memory.load(v.address, v.size))
+            string_references.append((v.address, st))
 
-    string_references = sum(string_references, [])
     strings = [] if len(string_references) == 0 else zip(*string_references)[1]
 
     valid_strings = []
