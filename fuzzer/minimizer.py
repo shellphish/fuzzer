@@ -3,6 +3,7 @@ import angr
 import shutil
 import tempfile
 import subprocess
+import shellphish_afl
 from .fuzzer import Fuzzer
 
 import logging
@@ -27,12 +28,9 @@ class Minimizer(object):
 
         # unfortunately here is some code reuse between Fuzzer and Minimizer
         p = angr.Project(self.binary_path)
-        tracer_dir = p.arch.qemu_name
-        afl_dir = "afl-%s" % p.loader.main_bin.os
-
-        self.tmin_path = os.path.join(self.base, "bin", afl_dir, "afl-tmin")
-
-        self.afl_path_var = os.path.join(self.base, "bin", afl_dir, "tracers", tracer_dir)
+        tracer_id = 'cgc' if p.loader.main_bin.os == 'cgc' else p.arch.qemu_name
+        self.tmin_path = os.path.join(shellphish_afl.afl_dir(tracer_id), "afl-tmin")
+        self.afl_path_var = shellphish_afl.afl_path_var(tracer_id)
 
         l.debug("tmin_path: %s", self.tmin_path)
         l.debug("afl_path_var: %s", self.afl_path_var)
