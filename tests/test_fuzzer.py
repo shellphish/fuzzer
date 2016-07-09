@@ -63,6 +63,8 @@ def test_fuzzer_spawn():
         time.sleep(1)
 
     nose.tools.assert_true(f.alive)
+    if f.alive:
+        f.kill()
 
 def run_all():
     functions = globals()
