@@ -3,6 +3,7 @@ import time
 import angr
 import signal
 import subprocess
+import shellphish_afl
 
 import logging
 
@@ -85,6 +86,9 @@ class Fuzzer(object):
         # has the fuzzer been turned on?
         self._on = False
 
+        p = angr.Project(binary_path)
+
+        self.os = p.loader.main_bin.os
 
         if self.is_multicb:
             # Where cgc/setup's Dockerfile checks it out
@@ -96,15 +100,12 @@ class Fuzzer(object):
             self.afl_path = os.path.expanduser('~/multiafl/afl/afl-fuzz')
             self.afl_path_var = self.afl_path
         else:
-            # the AFL build path for afl-qemu-trace-*
-            p = angr.Project(binary_path)
-            tracer_dir            = p.arch.qemu_name
-            afl_dir               = "afl-%s" % p.loader.main_bin.os
+            afl_dir               = shellphish_afl.afl_dir(self.os)
 
             # the path to AFL capable of calling driller
-            self.afl_path         = os.path.join(self.base, "bin", afl_dir, "afl-fuzz")
+            self.afl_path         = shellphish_afl.afl_bin(self.os)
 
-            self.afl_path_var     = os.path.join(self.base, "bin", afl_dir, "tracers", tracer_dir)
+            self.afl_path_var     = shellphish_afl.afl_path_var(self.os)
 
         self.qemu_dir         = self.afl_path_var
 
