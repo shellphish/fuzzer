@@ -305,7 +305,12 @@ class Fuzzer(object):
         queue_path = os.path.join(self.out_dir, fuzzer, 'queue')
         queue_files = filter(lambda x: x != ".state", os.listdir(queue_path))
 
-        return map(lambda f: open(os.path.join(queue_path, f)).read(), queue_files)
+        queue_l = [ ]
+        for q in queue_files:
+            with open(os.path.join(queue_path, q), 'rb') as f:
+                queue_l.append(f.read())
+
+        return queue_l
 
     def bitmap(self, fuzzer='fuzzer-master'):
         '''
