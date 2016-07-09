@@ -46,6 +46,23 @@ def test_minimizer():
 
     nose.tools.assert_equal(m.minimize(), '100')
 
+def test_fuzzer_spawn():
+    """
+    Test that the fuzzer spawns correctly
+    """
+
+    binary = os.path.join(bin_location, "shellphish/PIZZA_00001")
+
+    f = fuzzer.Fuzzer(binary, "work")
+    f.start()
+
+    for _ in range(15):
+        if f.alive:
+            break
+        time.sleep(1)
+
+    nose.tools.assert_true(f.alive)
+
 def run_all():
     functions = globals()
     all_functions = dict(filter((lambda (k, v): k.startswith('test_')), functions.items()))
