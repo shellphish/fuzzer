@@ -1,3 +1,4 @@
+import time
 import nose
 import tempfile
 import subprocess
