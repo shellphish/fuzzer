@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import random
 import struct
 import operator
@@ -237,6 +238,7 @@ class Extender(object):
 
         while True:
             self._do_round()
+            time.sleep(3)
 
 if __name__ == "__main__":
     l.setLevel("INFO")
