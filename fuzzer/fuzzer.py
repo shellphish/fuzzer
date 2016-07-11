@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import angr
 import signal
@@ -218,6 +219,31 @@ class Fuzzer(object):
         '''
 
         self.procs.append(self._start_afl_instance())
+
+    def add_extension(self, name):
+        """
+        Spawn the mutation extension `name`
+        :param name: name of extension
+        :returns: True if able to spawn extension
+        """
+
+        extension_path = os.path.join(os.path.dirname(__file__), "..", "fuzzer", "extensions", "%s.py" % name)
+        rpath = os.path.realpath(extension_path)
+
+        l.debug("Attempting to spin up extension %s", rpath)
+
+        if os.path.exists(extension_path):
+            args = [sys.executable, extension_path, self.binary_path, self.out_dir]
+
+            outfile_leaf = "%s-%d.log" % (name, len(self.procs))
+            outfile = os.path.join(self.job_dir, outfile_leaf)
+            fp = open(outfile, "wb")
+
+            p = subprocess.Popen(args, stderr=fp)
+            self.procs.append(p)
+            return True
+
+        return False
 
     def add_fuzzers(self, n):
         for _ in range(n):
