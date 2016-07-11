@@ -1,0 +1,97 @@
+import os
+import angr
+import shutil
+import tempfile
+import subprocess
+import shellphish_afl
+from .fuzzer import Fuzzer
+
+import logging
+l = logging.getLogger("fuzzer.Showmap")
+
+class Showmap(object):
+    """Show map"""
+
+    def __init__(self, binary_path, testcase):
+        """
+        :param binary_path: path to the binary which the testcase applies to
+        :param testcase: string representing the contents of the testcase
+        """
+
+        self.binary_path = binary_path
+        self.testcase = testcase
+
+        Fuzzer._perform_env_checks()
+
+        self.base = Fuzzer._get_base()
+        l.debug("got base dir %s", self.base)
+
+        # unfortunately here is some code reuse between Fuzzer and Minimizer
+        p = angr.Project(self.binary_path)
+        tracer_id = 'cgc' if p.loader.main_bin.os == 'cgc' else p.arch.qemu_name
+        self.showmap_path = os.path.join(shellphish_afl.afl_dir(tracer_id), "afl-showmap")
+        self.afl_path_var = shellphish_afl.afl_path_var(tracer_id)
+
+        l.debug("showmap_path: %s", self.showmap_path)
+        l.debug("afl_path_var: %s", self.afl_path_var)
+
+        os.environ['AFL_PATH'] = self.afl_path_var
+
+        # create temp
+        self.work_dir = tempfile.mkdtemp(prefix='showmap-', dir='/tmp/')
+
+        # flag for work directory removal
+        self._removed = False
+
+        self.input_testcase = os.path.join(self.work_dir, 'testcase')
+        self.output_testcase = os.path.join(self.work_dir, 'out')
+
+        l.debug("input_testcase: %s", self.input_testcase)
+        l.debug("output: %s", self.output_testcase)
+
+        # populate contents of input testcase
+        with open(self.input_testcase, 'w') as f:
+            f.write(testcase)
+
+    def __del__(self):
+        if not self._removed:
+            shutil.rmtree(self.work_dir)
+
+    def showmap(self):
+        """Create the map"""
+
+        self._start_showmap().wait()
+
+        result = open(self.output_testcase).read()
+
+        shutil.rmtree(self.work_dir)
+        self._removed = True
+
+        shownmap = dict()
+        for line in result.split("\n")[:-1]:
+            key, h_count = map(int, line.split(":"))
+            shownmap[key] = h_count
+
+        return shownmap
+
+    def _start_showmap(self, memory="8G"):
+
+        args = [self.showmap_path]
+
+        args += ["-o", self.output_testcase]
+        args += ["-m", memory]
+        args += ["-Q"]
+
+        args += ["--"]
+        args += [self.binary_path]
+
+        outfile = "minimizer.log"
+
+        l.debug("execing: %s > %s", " ".join(args), outfile)
+
+        outfile = os.path.join(self.work_dir, outfile)
+        fp = open(outfile, "w")
+
+        with open(self.input_testcase, 'rb') as it:
+            with open("/dev/null", 'wb') as devnull:
+                return subprocess.Popen(args, stdin=it, stdout=devnull, stderr=fp)
