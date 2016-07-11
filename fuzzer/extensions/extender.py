@@ -222,7 +222,10 @@ class Extender(object):
 
             queue_l = filter(lambda n: n != ".state", os.listdir(queue_dir))
             new = map(operator.itemgetter(1), filter(lambda i: i[0] > synced, zip(map(_extract_number, queue_l), queue_l)))
-            l.info("Found %d new inputs to extend", len(new))
+
+            if len(new):
+                l.info("Found %d new inputs to extend", len(new))
+
             for ninput in new:
                 n_path = os.path.join(queue_dir, ninput)
                 with open(n_path, "rb") as f:
