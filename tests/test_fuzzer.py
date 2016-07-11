@@ -47,6 +47,23 @@ def test_minimizer():
 
     nose.tools.assert_equal(m.minimize(), '100')
 
+def test_showmap():
+    """
+    Test the mapping of an input
+    """
+
+    true_dict = {7525: 1, 14981: 1, 25424: 1, 31473: 1, 33214: 1, 37711: 1, 64937: 1, 65353: 4, 66166: 1, 79477: 1, 86259: 1, 86387: 1, 96625: 1, 107932: 1, 116010: 1, 116490: 1, 117482: 4, 120443: 1}
+
+    binary = os.path.join(bin_location, "cfe_original/CADET_00003/CADET_00003")
+
+    testcase = "hello"
+
+    s = fuzzer.Showmap(binary, testcase)
+    smap = s.showmap()
+
+    for te in true_dict.keys():
+        nose.tools.assert_equal(true_dict[te], smap[te])
+
 def test_fuzzer_spawn():
     """
     Test that the fuzzer spawns correctly
