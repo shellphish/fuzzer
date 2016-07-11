@@ -172,7 +172,8 @@ class Extender(object):
     def _new_mutation(payload, extend_amount):
 
         def random_string(n):
-            return ''.join([random.choice(map(chr, range(256))) for _ in xrange(n)])
+            # no null bytes, no new lines
+            return ''.join([random.choice(map(chr, range(1, 9) + range(11, 256))) for _ in xrange(n)])
 
         np = payload + random_string(extend_amount + random.randint(0, 0x1000))
         l.debug("New mutation of length %d", len(np))
