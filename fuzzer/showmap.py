@@ -12,14 +12,24 @@ l = logging.getLogger("fuzzer.Showmap")
 class Showmap(object):
     """Show map"""
 
-    def __init__(self, binary_path, testcase):
+    def __init__(self, binary_path, testcase, timeout=None):
         """
         :param binary_path: path to the binary which the testcase applies to
         :param testcase: string representing the contents of the testcase
+        :param timeout: millisecond timeout
         """
 
         self.binary_path = binary_path
         self.testcase = testcase
+        self.timeout = None
+
+        if timeout is not None:
+            if isinstance(timeout, (int, long)):
+                self.timeout = str(timeout)
+            elif isinstance(timeout, (str)):
+                self.timeout = timeout
+            else:
+                raise ValueError("timeout param must be of type int or str")
 
         Fuzzer._perform_env_checks()
 
@@ -44,10 +54,10 @@ class Showmap(object):
         self._removed = False
 
         self.input_testcase = os.path.join(self.work_dir, 'testcase')
-        self.output_testcase = os.path.join(self.work_dir, 'out')
+        self.output = os.path.join(self.work_dir, 'out')
 
         l.debug("input_testcase: %s", self.input_testcase)
-        l.debug("output: %s", self.output_testcase)
+        l.debug("output: %s", self.output)
 
         # populate contents of input testcase
         with open(self.input_testcase, 'w') as f:
@@ -62,7 +72,7 @@ class Showmap(object):
 
         self._start_showmap().wait()
 
-        result = open(self.output_testcase).read()
+        result = open(self.output).read()
 
         shutil.rmtree(self.work_dir)
         self._removed = True
@@ -78,9 +88,12 @@ class Showmap(object):
 
         args = [self.showmap_path]
 
-        args += ["-o", self.output_testcase]
+        args += ["-o", self.output]
         args += ["-m", memory]
         args += ["-Q"]
+
+        if self.timeout:
+            args += ["-t", self.timeout]
 
         args += ["--"]
         args += [self.binary_path]
