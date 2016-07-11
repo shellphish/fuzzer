@@ -31,6 +31,9 @@ class Showmap(object):
             else:
                 raise ValueError("timeout param must be of type int or str")
 
+        # will be set by showmap's return code
+        self.causes_crash = False
+
         Fuzzer._perform_env_checks()
 
         self.base = Fuzzer._get_base()
@@ -70,7 +73,8 @@ class Showmap(object):
     def showmap(self):
         """Create the map"""
 
-        self._start_showmap().wait()
+        if self._start_showmap().wait() >= 2:
+            self.causes_crash = True
 
         result = open(self.output).read()
 
