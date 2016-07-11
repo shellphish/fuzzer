@@ -161,10 +161,10 @@ class Extender(object):
 
         if sm.causes_crash and self._interesting_crash(shownmap):
             self._new_crash(test_input)
-            l.debug("Found a new crash")
+            l.info("Found a new crash (length %d)", len(test_input))
         elif not sm.causes_crash and self._interesting_test(shownmap, bitmap):
             self._new_test(test_input)
-            l.debug("Found an interesting new input")
+            l.info("Found an interesting new input (length %d)", len(test_input))
         else:
             l.debug("Found a dud")
 
@@ -205,11 +205,11 @@ class Extender(object):
 
         other_fuzzers = filter(lambda d: d != self.name,  os.listdir(self.sync_dir))
         for fuzzer in other_fuzzers:
-            l.info("Looking to extend inputs in fuzzer '%s'", fuzzer)
+            l.debug("Looking to extend inputs in fuzzer '%s'", fuzzer)
 
             self.current_fuzzer = fuzzer
             synced = self._current_sync_count(fuzzer)
-            l.info("Already worked on %d inputs from fuzzer '%s'", synced, fuzzer)
+            l.debug("Already worked on %d inputs from fuzzer '%s'", synced, fuzzer)
 
             bitmap = self._current_bitmap(fuzzer)
 
@@ -236,7 +236,7 @@ class Extender(object):
             self._do_round()
 
 if __name__ == "__main__":
-    l.setLevel("DEBUG")
+    l.setLevel("INFO")
 
     if len(sys.argv) > 2:
         b = sys.argv[1]
