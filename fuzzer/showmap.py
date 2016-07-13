@@ -73,7 +73,7 @@ class Showmap(object):
     def showmap(self):
         """Create the map"""
 
-        if self._start_showmap().wait() >= 2:
+        if self._start_showmap().wait() == 2:
             self.causes_crash = True
 
         result = open(self.output).read()

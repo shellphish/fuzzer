@@ -138,11 +138,11 @@ class Extender(object):
 
             if i not in self.crash_bitmap:
                 interesting = True
-                self.crash_bitmap[i] = shownmap[i]
+                self.crash_bitmap[i] = [shownmap[i]]
             else:
-                if shownmap[i] > self.crash_bitmap[i]:
+                if shownmap[i] not in self.crash_bitmap[i]:
                     interesting = True
-                    self.crash_bitmap[i] = shownmap[i]
+                    self.crash_bitmap[i].append(shownmap[i])
 
         return interesting
 
