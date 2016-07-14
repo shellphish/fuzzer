@@ -350,7 +350,14 @@ class Fuzzer(object):
 
         bitmap_path = os.path.join(self.out_dir, fuzzer, "fuzz_bitmap")
 
-        return open(bitmap_path).read()
+        bdata = None
+        try:
+            with open(bitmap_path, "rb") as f:
+                bdata = f.read()
+        except IOError:
+            pass
+
+        return bdata
 
     def timed_out(self):
         if self.time_limit is None:
