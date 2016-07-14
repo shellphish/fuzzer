@@ -87,10 +87,6 @@ class Fuzzer(object):
         # has the fuzzer been turned on?
         self._on = False
 
-        p = angr.Project(binary_path)
-
-        self.os = p.loader.main_bin.os
-
         if self.is_multicb:
             # Where cgc/setup's Dockerfile checks it out
             # NOTE: 'afl/fakeforksrv' serves as 'qemu', as far as AFL is concerned
@@ -98,15 +94,23 @@ class Fuzzer(object):
             #       This QEMU cannot run standalone (always speaks the forkserver "protocol"),
             #       but 'fakeforksrv/run_via_fakeforksrv' allows it.
             # XXX: There is no driller/angr support, and probably will never be.
-            self.afl_path = os.path.expanduser('~/multiafl/afl/afl-fuzz')
-            self.afl_path_var = self.afl_path
+            self.afl_path = shellphish_afl.afl_bin('multi-cgc')
+            self.afl_path_var = shellphish_afl.afl_path_var('multi-cgc')
         else:
+
+            p = angr.Project(binary_path)
+
+            self.os = p.loader.main_bin.os
+
             afl_dir               = shellphish_afl.afl_dir(self.os)
 
             # the path to AFL capable of calling driller
             self.afl_path         = shellphish_afl.afl_bin(self.os)
 
             self.afl_path_var     = shellphish_afl.afl_path_var(self.os)
+
+            # set up libraries
+            self._export_library_path(p)
 
         self.qemu_dir         = self.afl_path_var
 
@@ -151,9 +155,6 @@ class Fuzzer(object):
 
         # set environment variable for the AFL_PATH
         os.environ['AFL_PATH'] = self.afl_path_var
-
-        # set up libraries
-        self._export_library_path(p)
 
     ### EXPOSED
     def start(self):
@@ -457,7 +458,7 @@ class Fuzzer(object):
         # increment the fuzzer ID
         self.fuzz_id += 1
 
-        return subprocess.Popen(args, stdout=fp)
+        return subprocess.Popen(args, stdout=fp, close_fds=True)
 
     def _start_afl(self):
         '''

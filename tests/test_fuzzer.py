@@ -83,6 +83,26 @@ def test_fuzzer_spawn():
     if f.alive:
         f.kill()
 
+def test_multicb_spawn():
+    """
+    Test that the fuzzer spins up for a multicb challenge.
+    """
+
+    binaries = [os.path.join(bin_location, "./cgc_qualifier_event/cgc/251abc02_01"),
+                os.path.join(bin_location, "./cgc_qualifier_event/cgc/251abc02_02")]
+
+    f = fuzzer.Fuzzer(binaries, "work")
+    f.start()
+
+    for _ in range(15):
+        if f.alive:
+            break
+        time.sleep(1)
+
+    nose.tools.assert_true(f.alive)
+    if f.alive:
+        f.kill()
+
 def run_all():
     functions = globals()
     all_functions = dict(filter((lambda (k, v): k.startswith('test_')), functions.items()))
