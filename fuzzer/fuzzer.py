@@ -446,7 +446,7 @@ class Fuzzer(object):
 
         # auto-calculate timeout based on the number of binaries
         if self.is_multicb:
-            args += ["-t", "%d+" % str(1000 * len(self.binary_path))]
+            args += ["-t", "%d+" % 1000 * len(self.binary_path)]
 
         args += ["--"]
         args += self.binary_path if self.is_multicb else [self.binary_path]
