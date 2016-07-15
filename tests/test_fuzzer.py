@@ -19,9 +19,11 @@ def test_dictionary_creation_cgc():
     binary = os.path.join(bin_location, "cgc_qualifier_event/cgc/ccf3d301_01")
     out_dict = tempfile.mktemp(prefix='fuzztest', dir='/tmp')
 
-    args = [os.path.join(fuzzer_bin, 'create_dict.py'), binary, out_dict]
+    args = [os.path.join(fuzzer_bin, 'create_dict.py'), binary]
 
-    p = subprocess.Popen(args)
+    with open(out_dict, "wb") as f:
+        p = subprocess.Popen(args, stdout=f)
+
     retcode = p.wait()
 
     nose.tools.assert_equal(retcode, 0)
@@ -88,10 +90,13 @@ def test_multicb_spawn():
     Test that the fuzzer spins up for a multicb challenge.
     """
 
+    import logging
+    logging.getLogger("fuzzer").setLevel("DEBUG")
+
     binaries = [os.path.join(bin_location, "./cgc_qualifier_event/cgc/251abc02_01"),
                 os.path.join(bin_location, "./cgc_qualifier_event/cgc/251abc02_02")]
 
-    f = fuzzer.Fuzzer(binaries, "work")
+    f = fuzzer.Fuzzer(binaries, "work", create_dictionary=True)
     f.start()
 
     for _ in range(15):
@@ -100,6 +105,11 @@ def test_multicb_spawn():
         time.sleep(1)
 
     nose.tools.assert_true(f.alive)
+
+    dictionary_path = os.path.join("work", "251abc02_01", "251abc02_01.dict")
+
+    nose.tools.assert_true(os.path.isfile(dictionary_path))
+
     if f.alive:
         f.kill()
 

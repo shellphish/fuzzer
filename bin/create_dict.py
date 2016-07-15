@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+import os
 import sys
 import angr
 import string
+import itertools
+
 import logging
 
 l = logging.getLogger("create_dict")
@@ -24,7 +27,9 @@ def hexescape(s):
     return ''.join(out)
 
 
-def create(binary, outfile):
+strcnt = itertools.count()
+
+def create(binary):
 
     b = angr.Project(binary, load_options={'auto_load_libs': False})
     cfg = b.analyses.CFG(resolve_indirect_jumps=True, collect_data_references=True)
@@ -49,25 +54,23 @@ def create(binary, outfile):
                 if len(s_atom) <= 128:
                     valid_strings.append(s_atom)
 
-    with open(outfile, 'w') as f:
-        for i, s in enumerate(set(valid_strings)):
-            s_val = hexescape(s)
-            f.write("string_%d=\"%s\"\n" % (i, s_val))
-
-    return bool(len(valid_strings))
+    for s in set(valid_strings):
+        s_val = hexescape(s)
+        print "string_%d=\"%s\"" % (strcnt.next(), s_val)
 
 
 def main(argv):
 
-    if len(argv) < 3:
+    if len(argv) < 2:
         l.error("incorrect number of arguments passed to create_dict")
-        print "usage: %s <binary> <output-dictionary>" % sys.argv[0]
+        print "usage: %s [binary1] [binary2] [binary3] ... " % sys.argv[0]
         return 1
 
-    binary = argv[1]
-    outfile = argv[2]
+    for binary in argv[1:]:
+        if os.path.isfile(binary):
+            create(binary)
 
-    return int(not create(binary, outfile))
+    return int(strcnt.next() == 0)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

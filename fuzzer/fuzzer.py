@@ -403,17 +403,16 @@ class Fuzzer(object):
     ### DICTIONARY CREATION
 
     def _create_dict(self, dict_file):
-        if self.is_multicb:
-            # TODO: Create for each CB and merge? Or just discard the string IDs and concatenate
-            l.warning("Not trying to create the dictionary for multi-CBs")
-            return False
 
         l.debug("creating a dictionary of string references within binary \"%s\"",
                 self.binary_id)
 
-        args = [self.create_dict_path, self.binary_path, dict_file]
+        args = [self.create_dict_path]
+        args += self.binary_path if self.is_multicb else [self.binary_path]
 
-        p = subprocess.Popen(args)
+        dfp = open(dict_file, "wb")
+
+        p = subprocess.Popen(args, stdout=dfp)
         retcode = p.wait()
 
         return True if retcode == 0 else False
@@ -444,6 +443,10 @@ class Fuzzer(object):
 
         if self.extra_opts is not None:
             args += self.extra_opts
+
+        # auto-calculate timeout based on the number of binaries
+        if self.is_multicb:
+            args += ["-t", "%d+" % str(1000 * len(self.binary_path))]
 
         args += ["--"]
         args += self.binary_path if self.is_multicb else [self.binary_path]
