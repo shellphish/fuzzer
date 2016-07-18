@@ -84,6 +84,8 @@ class Extender(object):
         if isinstance(args, list):
             pargs += args
 
+        pargs += ["-m", "8G"]
+
         pargs += [self.binary]
 
         with open("/dev/null", "wb") as devnull:
@@ -173,7 +175,6 @@ class Extender(object):
     def _new_mutation(payload, extend_amount):
 
         def random_string(n):
-            # no null bytes, no new lines
             return ''.join([random.choice(map(chr, range(1, 9) + range(11, 256))) for _ in xrange(n)])
 
         np = payload + random_string(extend_amount + random.randint(0, 0x1000))
@@ -188,6 +189,10 @@ class Extender(object):
         for numerator, denominator in receive_counts:
             if numerator != denominator:
                 extend_by = denominator - numerator
+
+                if extend_by > 1000000:
+                    l.warning("Amount to extend is greater than 1,000,000, refusing to perform extension")
+                    continue
 
                 for _ in range(10):
                     test_input = self._new_mutation(r, extend_by)
