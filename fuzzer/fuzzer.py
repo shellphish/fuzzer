@@ -169,7 +169,7 @@ class Fuzzer(object):
 
     @property
     def alive(self):
-        if not self._on:
+        if not self._on and len(self.stats) > 0:
             return False
 
         alive_cnt = 0
