@@ -62,7 +62,7 @@ class Minimizer(object):
 
         self._start_minimizer().wait()
 
-        result = open(self.output_testcase).read()
+        with open(self.output_testcase) as f: result = f.read()
 
         shutil.rmtree(self.work_dir)
         self._removed = True
@@ -86,6 +86,5 @@ class Minimizer(object):
         l.debug("execing: %s > %s", " ".join(args), outfile)
 
         outfile = os.path.join(self.work_dir, outfile)
-        fp = open(outfile, "w")
-
-        return subprocess.Popen(args, stderr=fp)
+        with open(outfile, "w") as fp:
+            return subprocess.Popen(args, stderr=fp)

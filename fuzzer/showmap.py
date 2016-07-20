@@ -76,7 +76,7 @@ class Showmap(object):
         if self._start_showmap().wait() == 2:
             self.causes_crash = True
 
-        result = open(self.output).read()
+        with open(self.output) as f: result = f.read()
 
         shutil.rmtree(self.work_dir)
         self._removed = True
@@ -107,8 +107,5 @@ class Showmap(object):
         l.debug("execing: %s > %s", " ".join(args), outfile)
 
         outfile = os.path.join(self.work_dir, outfile)
-        fp = open(outfile, "w")
-
-        with open(self.input_testcase, 'rb') as it:
-            with open("/dev/null", 'wb') as devnull:
-                return subprocess.Popen(args, stdin=it, stdout=devnull, stderr=fp)
+        with open(outfile, "w") as fp, open(self.input_testcase, 'rb') as it, open("/dev/null", 'wb') as devnull:
+            return subprocess.Popen(args, stdin=it, stdout=devnull, stderr=fp)

@@ -238,9 +238,8 @@ class Fuzzer(object):
 
             outfile_leaf = "%s-%d.log" % (name, len(self.procs))
             outfile = os.path.join(self.job_dir, outfile_leaf)
-            fp = open(outfile, "wb")
-
-            p = subprocess.Popen(args, stderr=fp)
+            with open(outfile, "wb") as fp:
+                p = subprocess.Popen(args, stderr=fp)
             self.procs.append(p)
             return True
 
@@ -410,10 +409,9 @@ class Fuzzer(object):
         args = [self.create_dict_path]
         args += self.binary_path if self.is_multicb else [self.binary_path]
 
-        dfp = open(dict_file, "wb")
-
-        p = subprocess.Popen(args, stdout=dfp)
-        retcode = p.wait()
+        with open(dict_file, "wb") as dfp:
+            p = subprocess.Popen(args, stdout=dfp)
+            retcode = p.wait()
 
         return True if retcode == 0 else False
 
@@ -455,13 +453,12 @@ class Fuzzer(object):
 
         l.debug("execing: %s > %s", ' '.join(args), outfile)
 
-        outfile = os.path.join(self.job_dir, outfile)
-        fp = open(outfile, "w")
-
         # increment the fuzzer ID
         self.fuzz_id += 1
 
-        return subprocess.Popen(args, stdout=fp, close_fds=True)
+        outfile = os.path.join(self.job_dir, outfile)
+        with open(outfile, "w") as fp:
+            return subprocess.Popen(args, stdout=fp, close_fds=True)
 
     def _start_afl(self):
         '''
@@ -538,7 +535,7 @@ class Fuzzer(object):
                 directory = "powerpc"
             if p.arch.qemu_name == "arm":
                 # some stuff qira uses to determine the which libs to use for arm
-                progdata = open(self.binary_path, "rb").read(0x800)
+                with open(self.binary_path, "rb") as f: progdata = f.read(0x800)
                 if "/lib/ld-linux.so.3" in progdata:
                     directory = "armel"
                 elif "/lib/ld-linux-armhf.so.3" in progdata:
