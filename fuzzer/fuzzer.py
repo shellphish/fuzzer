@@ -413,7 +413,7 @@ class Fuzzer(object):
             p = subprocess.Popen(args, stdout=dfp)
             retcode = p.wait()
 
-        return True if retcode == 0 else False
+        return retcode == 0 and os.path.getsize(dict_file)
 
     ### AFL SPAWNERS
 
