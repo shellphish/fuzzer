@@ -3,6 +3,7 @@ import sys
 import time
 import angr
 import signal
+import shutil
 import subprocess
 import shellphish_afl
 
@@ -20,7 +21,7 @@ class Fuzzer(object):
 
     def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None,
             target_opts=None, extra_opts=None, create_dictionary=False,
-            seeds=None, crash_mode=False):
+            seeds=None, crash_mode=False, never_resume=False):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
@@ -31,6 +32,7 @@ class Fuzzer(object):
         :param target_opts: extra options to pass to the target
         :param extra_opts: extra options to pass to AFL when starting up
         :param crash_mode: if set to True AFL is set to crash explorer mode, and seed will be expected to be a crashing input
+        :param never_resume: never resume an old fuzzing run, even if it's possible
         '''
 
         self.binary_path    = binary_path
@@ -86,6 +88,10 @@ class Fuzzer(object):
         self.resuming         = bool(os.listdir(self.out_dir)) if os.path.isdir(self.out_dir) else False
         # has the fuzzer been turned on?
         self._on = False
+
+        if never_resume and self.resuming:
+            shutil.rmtree(self.job_dir)
+            self.resuming = False
 
         if self.is_multicb:
             # Where cgc/setup's Dockerfile checks it out
