@@ -90,6 +90,7 @@ class Fuzzer(object):
         self._on = False
 
         if never_resume and self.resuming:
+            l.info("could resume, but starting over upon request")
             shutil.rmtree(self.job_dir)
             self.resuming = False
 
@@ -175,7 +176,7 @@ class Fuzzer(object):
 
     @property
     def alive(self):
-        if not self._on and len(self.stats) > 0:
+        if not self._on or not len(self.stats):
             return False
 
         alive_cnt = 0
@@ -184,7 +185,7 @@ class Fuzzer(object):
                 try:
                     os.kill(int(self.stats[fuzzer]['fuzzer_pid']), 0)
                     alive_cnt += 1
-                except OSError:
+                except OSError, KeyError:
                     pass
 
         return bool(alive_cnt)
