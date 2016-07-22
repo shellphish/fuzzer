@@ -29,7 +29,8 @@ class Extender(object):
 
         directories = [os.path.join(self.sync_dir, self.name),
                        os.path.join(self.sync_dir, self.name, "crashes"),
-                       os.path.join(self.sync_dir, self.name, "queue")]
+                       os.path.join(self.sync_dir, self.name, "queue"),
+                       os.path.join(self.sync_dir, self.name, ".synced")]
 
         self.crash_bitmap = dict()
 
@@ -46,7 +47,7 @@ class Extender(object):
         Get the current number of inputs belonging to `fuzzer` which we've already mutated.
         """
 
-        sync_file = os.path.join(self.sync_dir, fuzzer, ".synced", self.name)
+        sync_file = os.path.join(self.sync_dir, self.name, ".synced", fuzzer)
         if os.path.exists(sync_file):
             with open(sync_file, 'rb') as f:
                 sc = struct.unpack("<I", f.read())[0]
