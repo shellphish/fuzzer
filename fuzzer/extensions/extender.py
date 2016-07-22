@@ -60,7 +60,7 @@ class Extender(object):
         Update the sync count for a particular fuzzer.
         """
 
-        sync_file = os.path.join(self.sync_dir, fuzzer, ".synced", self.name)
+        sync_file = os.path.join(self.sync_dir, self.name, ".synced", fuzzer)
 
         raw_count = struct.pack("<I", n)
         with open(sync_file, 'wb') as f:
