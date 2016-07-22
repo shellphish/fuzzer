@@ -55,12 +55,36 @@ class Extender(object):
 
         return 0
 
+    def _current_crash_sync_count(self, fuzzer):
+        """
+        Get the current number of inputs belonging to `fuzzer` which we've already mutated.
+        """
+
+        sync_file = os.path.join(self.sync_dir, self.name, ".synced", "%s-crashes" % fuzzer)
+        if os.path.exists(sync_file):
+            with open(sync_file, 'rb') as f:
+                sc = struct.unpack("<I", f.read())[0]
+            return sc
+
+        return 0
+
     def _update_sync_count(self, fuzzer, n):
         """
         Update the sync count for a particular fuzzer.
         """
 
         sync_file = os.path.join(self.sync_dir, self.name, ".synced", fuzzer)
+
+        raw_count = struct.pack("<I", n)
+        with open(sync_file, 'wb') as f:
+            f.write(raw_count)
+
+    def _update_crash_sync_count(self, fuzzer, n):
+        """
+        Update the sync count for a particular fuzzer.
+        """
+
+        sync_file = os.path.join(self.sync_dir, self.name, ".synced", "%s-crashes" % fuzzer)
 
         raw_count = struct.pack("<I", n)
         with open(sync_file, 'wb') as f:
@@ -216,6 +240,8 @@ class Extender(object):
 
             self.current_fuzzer = fuzzer
             synced = self._current_sync_count(fuzzer)
+            c_synced = self._current_crash_sync_count(fuzzer)
+
             l.debug("Already worked on %d inputs from fuzzer '%s'", synced, fuzzer)
 
             bitmap = self._current_bitmap(fuzzer)
@@ -228,17 +254,27 @@ class Extender(object):
             queue_dir = os.path.join(self.sync_dir, fuzzer, "queue")
 
             queue_l = filter(lambda n: n != ".state", os.listdir(queue_dir))
-            new = map(operator.itemgetter(1), filter(lambda i: i[0] > synced, zip(map(_extract_number, queue_l), queue_l)))
+            new_q = map(operator.itemgetter(1), filter(lambda i: i[0] > synced, zip(map(_extract_number, queue_l), queue_l)))
 
+            crash_dir = os.path.join(self.sync_dir, fuzzer, "crashes")
+            crash_l = filter(lambda n: n != "README.txt", os.listdir(crash_dir))
+            new_c = map(operator.itemgetter(1), filter(lambda i: i[0] > c_synced, zip(map(_extract_number, crash_l), crash_l)))
+            new = new_q + new_c
             if len(new):
                 l.info("Found %d new inputs to extend", len(new))
 
-            for ninput in new:
+            for ninput in new_q:
                 n_path = os.path.join(queue_dir, ninput)
                 with open(n_path, "rb") as f:
                     self._mutate(f.read(), bitmap)
 
+            for ninput in new_c:
+                n_path = os.path.join(crash_dir, ninput)
+                with open(n_path, "rb") as f:
+                    self._mutate(f.read(), bitmap)
+
             self._update_sync_count(fuzzer, len(queue_l))
+            self._update_crash_sync_count(fuzzer, len(crash_l))
 
     def run(self):
 
