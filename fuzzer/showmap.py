@@ -23,6 +23,16 @@ class Showmap(object):
         self.testcase = testcase
         self.timeout = None
 
+        if isinstance(binary_path, basestring):
+            self.is_multicb = False
+            self.binaries = [binary_path]
+        elif isinstance(binary_path, (list,tuple)):
+            self.is_multicb = True
+            self.binaries = binary_path
+        else:
+            raise ValueError("Was expecting either a string or a list/tuple for binary_path! "
+                "It's {} instead.".format(type(binary_path)))
+
         if timeout is not None:
             if isinstance(timeout, (int, long)):
                 self.timeout = str(timeout)
@@ -39,9 +49,12 @@ class Showmap(object):
         self.base = Fuzzer._get_base()
         l.debug("got base dir %s", self.base)
 
-        # unfortunately here is some code reuse between Fuzzer and Minimizer
-        p = angr.Project(self.binary_path)
+        # unfortunately here is some code reuse between Fuzzer and Minimizer (and Showmap!)
+        p = angr.Project(self.binaries[0])
         tracer_id = 'cgc' if p.loader.main_bin.os == 'cgc' else p.arch.qemu_name
+        if self.is_multicb:
+            tracer_id = 'multi-{}'.format(tracer_id)
+
         self.showmap_path = os.path.join(shellphish_afl.afl_dir(tracer_id), "afl-showmap")
         self.afl_path_var = shellphish_afl.afl_path_var(tracer_id)
 
@@ -100,7 +113,7 @@ class Showmap(object):
             args += ["-t", self.timeout]
 
         args += ["--"]
-        args += [self.binary_path]
+        args += self.binaries
 
         outfile = "minimizer.log"
 
