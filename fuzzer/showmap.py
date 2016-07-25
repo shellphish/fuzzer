@@ -106,7 +106,8 @@ class Showmap(object):
         args = [self.showmap_path]
 
         args += ["-o", self.output]
-        args += ["-m", memory]
+        if not self.is_multicb:
+            args += ["-m", memory]
         args += ["-Q"]
 
         if self.timeout:
@@ -121,4 +122,4 @@ class Showmap(object):
 
         outfile = os.path.join(self.work_dir, outfile)
         with open(outfile, "w") as fp, open(self.input_testcase, 'rb') as it, open("/dev/null", 'wb') as devnull:
-            return subprocess.Popen(args, stdin=it, stdout=devnull, stderr=fp)
+            return subprocess.Popen(args, stdin=it, stdout=devnull, stderr=fp, close_fds=True)
