@@ -254,11 +254,11 @@ class Extender(object):
             queue_dir = os.path.join(self.sync_dir, fuzzer, "queue")
 
             queue_l = filter(lambda n: n != ".state", os.listdir(queue_dir))
-            new_q = map(operator.itemgetter(1), filter(lambda i: i[0] > synced, zip(map(_extract_number, queue_l), queue_l)))
+            new_q = map(operator.itemgetter(1), filter(lambda i: i[0] >= synced, zip(map(_extract_number, queue_l), queue_l)))
 
             crash_dir = os.path.join(self.sync_dir, fuzzer, "crashes")
             crash_l = filter(lambda n: n != "README.txt", os.listdir(crash_dir))
-            new_c = map(operator.itemgetter(1), filter(lambda i: i[0] > c_synced, zip(map(_extract_number, crash_l), crash_l)))
+            new_c = map(operator.itemgetter(1), filter(lambda i: i[0] >= c_synced, zip(map(_extract_number, crash_l), crash_l)))
             new = new_q + new_c
             if len(new):
                 l.info("Found %d new inputs to extend", len(new))
