@@ -112,6 +112,8 @@ class Showmap(object):
 
         if self.timeout:
             args += ["-t", self.timeout]
+        else:
+            args += ["-t", "%d+" % (len(self.binaries) * 1000)]
 
         args += ["--"]
         args += self.binaries
