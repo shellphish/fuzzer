@@ -495,10 +495,14 @@ class Fuzzer(object):
                 l.error("AFL Error: Pipe at the beginning of core_pattern")
                 raise InstallError("execute 'echo core | sudo tee /proc/sys/kernel/core_pattern'")
 
-        with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
-            if not "performance" in f.read():
-                l.error("AFL Error: Suboptimal CPU scaling governor")
-                raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
+        # This file is based on a driver not all systems use
+        # http://unix.stackexchange.com/questions/153693/cant-use-userspace-cpufreq-governor-and-set-cpu-frequency
+        # TODO: Perform similar performance check for other default drivers.
+        if os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"):
+            with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
+                if not "performance" in f.read():
+                    l.error("AFL Error: Suboptimal CPU scaling governor")
+                    raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
 
         # TODO: test, to be sure it doesn't mess things up
         with open("/proc/sys/kernel/sched_child_runs_first") as f:
