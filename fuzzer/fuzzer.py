@@ -109,15 +109,17 @@ class Fuzzer(object):
 
             self.os = p.loader.main_bin.os
 
-            afl_dir               = shellphish_afl.afl_dir(self.os)
+            self.afl_dir          = shellphish_afl.afl_dir(self.os)
 
             # the path to AFL capable of calling driller
             self.afl_path         = shellphish_afl.afl_bin(self.os)
 
-            self.afl_path_var     = shellphish_afl.afl_path_var(p.arch.qemu_name)
-
-            # set up libraries
-            self._export_library_path(p)
+            if self.os == 'cgc':
+                self.afl_path_var = shellphish_afl.afl_path_var('cgc')
+            else:
+                self.afl_path_var = shellphish_afl.afl_path_var(p.arch.qemu_name)
+                # set up libraries
+                self._export_library_path(p)
 
         self.qemu_dir         = self.afl_path_var
 
@@ -555,7 +557,7 @@ class Fuzzer(object):
             if directory is None:
                 l.warning("architecture \"%s\" has no installed libraries", p.arch.qemu_name)
             else:
-                path = os.path.join(self.base, "bin", "fuzzer-libs", directory)
+                path = os.path.join(self.afl_dir, "..", "fuzzer-libs", directory)
         else:
             path = self.library_path
 
