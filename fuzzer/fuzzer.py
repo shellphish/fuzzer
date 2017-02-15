@@ -4,6 +4,7 @@ import time
 import angr
 import signal
 import shutil
+import threading
 import subprocess
 import shellphish_afl
 
@@ -16,12 +17,52 @@ config = { }
 class InstallError(Exception):
     pass
 
+
+#  http://stackoverflow.com/a/41450617
+class InfiniteTimer():
+    """A Timer class that does not stop, unless you want it to."""
+
+    def __init__(self, seconds, target):
+        self._should_continue = False
+        self.is_running = False
+        self.seconds = seconds
+        self.target = target
+        self.thread = None
+
+    def _handle_target(self):
+        self.is_running = True
+        self.target()
+        self.is_running = False
+        self._start_timer()
+
+    def _start_timer(self):
+        if self._should_continue: # Code could have been running when cancel was called.
+            self.thread = threading.Timer(self.seconds, self._handle_target)
+            self.thread.start()
+
+    def start(self):
+        if not self._should_continue and not self.is_running:
+            self._should_continue = True
+            self._start_timer()
+        else:
+            print("Timer already started or running, please wait if you're restarting.")
+
+    def cancel(self):
+        if self.thread is not None:
+            self._should_continue = False # Just in case thread is running and cancel fails.
+            self.thread.cancel()
+        else:
+            print("Timer never started or failed to initialize.")
+
+
+
 class Fuzzer(object):
     ''' Fuzzer object, spins up a fuzzing job on a binary '''
 
-    def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None,
+    def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None, memory="8G",
             target_opts=None, extra_opts=None, create_dictionary=False,
-            seeds=None, crash_mode=False, never_resume=False, qemu=True, memory="8G"):
+            seeds=None, crash_mode=False, never_resume=False, qemu=True, stuck_callback=None,
+                 use_forced=False):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
@@ -35,6 +76,7 @@ class Fuzzer(object):
         :param never_resume: never resume an old fuzzing run, even if it's possible
         :param qemu: Utilize QEMU for instrumentation of binary.
         :param memory: AFL child process memory limit (default: "8G")
+        :param stuck_callback: the callback to call when afl has no pending fav's
         '''
 
         self.binary_path    = binary_path
@@ -44,8 +86,9 @@ class Fuzzer(object):
         self.library_path   = library_path
         self.target_opts    = [ ] if target_opts is None else target_opts
         self.crash_mode     = crash_mode
-        self.qemu           = qemu
         self.memory         = memory
+        self.qemu           = qemu
+        self.use_forced = use_forced
 
         Fuzzer._perform_env_checks()
 
@@ -162,9 +205,19 @@ class Fuzzer(object):
             if create_dictionary:
                 if self._create_dict(dictionary_file):
                     self.dictionary = dictionary_file
+                    l.warning("done making dictionary")
                 else:
                     # no luck creating a dictionary
                     l.warning("[%s] unable to create dictionary", self.binary_id)
+
+        if not self.use_forced:
+            l.warning("not forced")
+            self._timer = InfiniteTimer(30, self._timer_callback)
+        else:
+            l.warning("forced")
+            self._timer = InfiniteTimer(5*60, self._timer_callback)
+
+        self._stuck_callback = stuck_callback
 
         # set environment variable for the AFL_PATH
         os.environ['AFL_PATH'] = self.afl_path_var
@@ -177,6 +230,9 @@ class Fuzzer(object):
 
         # spin up the AFL workers
         self._start_afl()
+
+        # start the callback timer
+        self._timer.start()
 
         self._on = True
 
@@ -200,6 +256,8 @@ class Fuzzer(object):
         for p in self.procs:
             p.terminate()
             p.wait()
+
+        self._timer.cancel()
 
         self._on = False
 
@@ -416,10 +474,10 @@ class Fuzzer(object):
 
     def _create_dict(self, dict_file):
 
-        l.debug("creating a dictionary of string references within binary \"%s\"",
+        l.warning("creating a dictionary of string references within binary \"%s\"",
                 self.binary_id)
 
-        args = [self.create_dict_path]
+        args = [sys.executable, self.create_dict_path]
         args += self.binary_path if self.is_multicb else [self.binary_path]
 
         with open(dict_file, "wb") as dfp:
@@ -580,3 +638,12 @@ class Fuzzer(object):
         if path is not None:
             l.debug("exporting QEMU_LD_PREFIX of '%s'", path)
             os.environ['QEMU_LD_PREFIX'] = path
+
+    def _timer_callback(self):
+        if self._stuck_callback is not None:
+            # check if afl has pending fav's
+            if int(self.stats['fuzzer-master']['pending_favs']) == 0 or self.use_forced:
+                self._stuck_callback(self)
+
+    def __del__(self):
+        self.kill()
