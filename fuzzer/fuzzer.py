@@ -495,11 +495,13 @@ class Fuzzer(object):
 
     @staticmethod
     def _perform_env_checks():
+        err = ""
+
         # check for afl sensitive settings
         with open("/proc/sys/kernel/core_pattern") as f:
             if not "core" in f.read():
-                l.error("AFL Error: Pipe at the beginning of core_pattern")
-                raise InstallError("execute 'echo core | sudo tee /proc/sys/kernel/core_pattern'")
+                err += "AFL Error: Pipe at the beginning of core_pattern\n"
+                err += "execute 'echo core | sudo tee /proc/sys/kernel/core_pattern'\n"
 
         # This file is based on a driver not all systems use
         # http://unix.stackexchange.com/questions/153693/cant-use-userspace-cpufreq-governor-and-set-cpu-frequency
@@ -507,14 +509,20 @@ class Fuzzer(object):
         if os.path.exists("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"):
             with open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor") as f:
                 if not "performance" in f.read():
-                    l.error("AFL Error: Suboptimal CPU scaling governor")
-                    raise InstallError("execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'")
+                    err += "AFL Error: Suboptimal CPU scaling governor\n"
+                    err += "execute 'cd /sys/devices/system/cpu; echo performance | sudo tee cpu*/cpufreq/scaling_governor'\n"
 
         # TODO: test, to be sure it doesn't mess things up
         with open("/proc/sys/kernel/sched_child_runs_first") as f:
             if not "1" in f.read():
-                l.error("AFL Warning: We probably want the fork() children to run first")
-                raise InstallError("execute 'echo 1 | sudo tee /proc/sys/kernel/sched_child_runs_first'")
+                err += "AFL Warning: We probably want the fork() children to run first\n"
+                err += "execute 'echo 1 | sudo tee /proc/sys/kernel/sched_child_runs_first'\n"
+
+        # Spit out all errors at the same time
+        if err != "":
+            l.error(err)
+            raise InstallError(err)
+
 
     @staticmethod
     def _get_base():
