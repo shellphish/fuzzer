@@ -544,6 +544,8 @@ class Fuzzer(object):
                 directory = "arm64"
             if p.arch.qemu_name == "i386":
                 directory = "i386"
+            if p.arch.qemu_name == "x86_64":
+                directory = "x86_64"
             if p.arch.qemu_name == "mips":
                 directory = "mips"
             if p.arch.qemu_name == "mipsel":
