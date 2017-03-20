@@ -21,7 +21,7 @@ class Fuzzer(object):
 
     def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None,
             target_opts=None, extra_opts=None, create_dictionary=False,
-            seeds=None, crash_mode=False, never_resume=False, qemu=True):
+            seeds=None, crash_mode=False, never_resume=False, qemu=True, memory="8G"):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
@@ -34,6 +34,7 @@ class Fuzzer(object):
         :param crash_mode: if set to True AFL is set to crash explorer mode, and seed will be expected to be a crashing input
         :param never_resume: never resume an old fuzzing run, even if it's possible
         :param qemu: Utilize QEMU for instrumentation of binary.
+        :param memory: AFL child process memory limit (default: "8G")
         '''
 
         self.binary_path    = binary_path
@@ -44,6 +45,7 @@ class Fuzzer(object):
         self.target_opts    = [ ] if target_opts is None else target_opts
         self.crash_mode     = crash_mode
         self.qemu           = qemu
+        self.memory         = memory
 
         Fuzzer._perform_env_checks()
 
@@ -428,13 +430,13 @@ class Fuzzer(object):
 
     ### AFL SPAWNERS
 
-    def _start_afl_instance(self, memory="8G"):
+    def _start_afl_instance(self):
 
         args = [self.afl_path]
 
         args += ["-i", self.in_dir]
         args += ["-o", self.out_dir]
-        args += ["-m", memory]
+        args += ["-m", self.memory]
 
         if self.qemu:
             args += ["-Q"]
