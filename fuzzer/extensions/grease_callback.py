@@ -6,11 +6,11 @@ from fuzzer import Showmap
 l = logging.getLogger("grease_callback")
 
 class GreaseCallback(object):
-    def __init__(self, grease_dir, grease_filter=lambda x: True, grease_sorter=lambda x: x):
+    def __init__(self, grease_dir, grease_filter=None, grease_sorter=None):
         self._grease_dir = grease_dir
         assert os.path.exists(grease_dir)
-        self._grease_filter = grease_filter
-        self._grease_sorter = grease_sorter
+        self._grease_filter = grease_filter if grease_filter is not None else lambda x: True
+        self._grease_sorter = grease_sorter if grease_sorter is not None else lambda x: x
 
     def grease_callback(self, fuzz):
         l.warning("we are stuck, trying to grease the wheels!")
@@ -27,7 +27,7 @@ class GreaseCallback(object):
 
         # iterate until we find one with a new bitmap
         bitmap = fuzz.bitmap()
-        for a in sorted(grease_inputs, key=self._grease_sorter):
+        for a in self._grease_sorter(grease_inputs):
             if os.path.getsize(a) == 0:
                 continue
             with open(a) as sf:
