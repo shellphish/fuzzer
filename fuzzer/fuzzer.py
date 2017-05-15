@@ -45,14 +45,14 @@ class InfiniteTimer():
             self._should_continue = True
             self._start_timer()
         else:
-            print("Timer already started or running, please wait if you're restarting.")
+            print "Timer already started or running, please wait if you're restarting."
 
     def cancel(self):
         if self.thread is not None:
             self._should_continue = False # Just in case thread is running and cancel fails.
             self.thread.cancel()
         else:
-            print("Timer never started or failed to initialize.")
+            print "Timer never started or failed to initialize."
 
 
 
@@ -62,7 +62,7 @@ class Fuzzer(object):
     def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None, memory="8G",
             target_opts=None, extra_opts=None, create_dictionary=False,
             seeds=None, crash_mode=False, never_resume=False, qemu=True, stuck_callback=None,
-                 use_forced=False):
+                 force_interval=None):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
@@ -88,7 +88,7 @@ class Fuzzer(object):
         self.crash_mode     = crash_mode
         self.memory         = memory
         self.qemu           = qemu
-        self.use_forced = use_forced
+        self.force_interval = force_interval
 
         Fuzzer._perform_env_checks()
 
@@ -210,12 +210,12 @@ class Fuzzer(object):
                     # no luck creating a dictionary
                     l.warning("[%s] unable to create dictionary", self.binary_id)
 
-        if not self.use_forced:
+        if self.force_interval is None:
             l.warning("not forced")
             self._timer = InfiniteTimer(30, self._timer_callback)
         else:
             l.warning("forced")
-            self._timer = InfiniteTimer(5*60, self._timer_callback)
+            self._timer = InfiniteTimer(self.force_interval, self._timer_callback)
 
         self._stuck_callback = stuck_callback
 
@@ -247,7 +247,7 @@ class Fuzzer(object):
                 try:
                     os.kill(int(self.stats[fuzzer]['fuzzer_pid']), 0)
                     alive_cnt += 1
-                except OSError, KeyError:
+                except (OSError, KeyError):
                     pass
 
         return bool(alive_cnt)
@@ -642,7 +642,7 @@ class Fuzzer(object):
     def _timer_callback(self):
         if self._stuck_callback is not None:
             # check if afl has pending fav's
-            if int(self.stats['fuzzer-master']['pending_favs']) == 0 or self.use_forced:
+            if int(self.stats['fuzzer-master']['pending_favs']) == 0 or self.force_interval is not None:
                 self._stuck_callback(self)
 
     def __del__(self):
