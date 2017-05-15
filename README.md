@@ -25,5 +25,9 @@ Then, install this fuzzer wrapper:
 
 ## Usage
 
-Big TODO.
-For now, `import fuzzer` and figure it out ;-)
+There are two ways of using this package.
+The easy way is to use the `shellphuzz` script, which allows you to specify various options, enable driller, etc.
+The script has explanations about its usage with `--help`.
+
+You can also use it programmatically, but we have no documentation for that.
+For now, `import fuzzer` or look at the shellphuz script and figure it out ;-)
