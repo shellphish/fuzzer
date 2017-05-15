@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import imp
+import time
+import fuzzer
+import shutil
+import socket
+import driller
+import tarfile
+import argparse
+import importlib
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description="Shellphish fuzzer interface")
+	parser.add_argument('binary', help="the binary")
+	parser.add_argument('-g', '--grease-with', help="A directory of inputs to grease the fuzzer with when it gets stuck.")
+	parser.add_argument('-d', '--driller_workers', help="When the fuzzer gets stuck, drill with N workers.", type=int)
+	parser.add_argument('-f', '--force_interval', help="Force greaser/fuzzer assistance at a regular interval (in seconds).", type=float)
+	parser.add_argument('-w', '--work-dir', help="The work directory for AFL.", default="/dev/shm/work/")
+	parser.add_argument('-c', '--afl-cores', help="Number of AFL workers to spin up.", default=1, type=int)
+	parser.add_argument('-t', '--timeout', help="Timeout (in seconds).", type=float)
+	parser.add_argument('-i', '--ipython', help="Drop into ipython after starting the fuzzer.", action='store_true')
+	parser.add_argument('-T', '--tarball', help="Tarball the resulting AFL workdir for further analysis to this file -- '{}' is replaced with the hostname.")
+	parser.add_argument('-m', '--helper-module', help="A module that includes some helper scripts for seed selection and such.")
+	parser.add_argument('--no-dictionary', help="Do not create a dictionary before fuzzing.", action='store_true', default=False)
+	args = parser.parse_args()
+
+	try: os.mkdir("/dev/shm/work/")
+	except OSError: pass
+
+	if args.helper_module:
+		try:
+			helper_module = importlib.import_module(args.helper_module)
+		except (ImportError, TypeError):
+			helper_module = imp.load_source('fuzzing_helper', args.helper_module)
+	else:
+		helper_module = None
+
+	drill_extension = None
+	grease_extension = None
+
+	if args.grease_with:
+		print "[*] Greasing..."
+		grease_extension = fuzzer.GreaseCallback(
+			args.grease_with,
+			grease_filter=helper_module.grease_filter if helper_module is not None else None,
+			grease_sorter=helper_module.grease_sorter if helper_module is not None else None
+		)
+	if args.driller_workers:
+		print "[*] Drilling..."
+		drill_extension = driller.LocalCallback(num_workers=args.driller_workers)
+
+	stuck_callback = (
+		(lambda f: (grease_extension(f), drill_extension(f))) if drill_extension and grease_extension
+		else drill_extension or grease_extension
+	)
+
+	print "[*] Creating fuzzer..."
+	fuzzer = fuzzer.Fuzzer(
+		sys.argv[1], args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
+		create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback
+	)
+
+	# start it!
+	print "[*] Starting fuzzer..."
+	fuzzer.start()
+	start_time = time.time()
+
+	if args.timeout:
+		print "[*] Sleeping for %d seconds." % args.timeout
+		try:
+			time.sleep(args.timeout)
+		except KeyboardInterrupt:
+			fuzzer.kill()
+			if drill_extension:
+				drill_extension.kill()
+			raise
+		print "[*] Hit timeout, done running!"
+
+	if args.ipython:
+		print "[!]"
+		print "[!] Launching ipython shell. Relevant variables:"
+		print "[!]"
+		print "[!] fuzzer"
+		print "[!] driller_extension"
+		print "[!] grease_extension"
+		print "[!]"
+		import IPython; IPython.embed()
+
+	print "[*] Terminating fuzzer."
+	fuzzer.kill()
+	if drill_extension:
+		drill_extension.kill()
+
+	if args.tarball:
+		print "[*] Dumping results..."
+		p = os.path.join("/tmp/", "afl_sync")
+		try:
+			shutil.rmtree(p)
+		except (OSError, IOError):
+			pass
+		shutil.copytree(fuzzer.out_dir, p)
+
+		tar_name = args.tarball.replace("{}", socket.gethostname())
+
+		tar = tarfile.open("/tmp/afl_sync.tar.gz", "w:gz")
+		tar.add(p, arcname=socket.gethostname()+'-'+os.path.basename(args.binary))
+		tar.close()
+		print "[*] Copying out result tarball to %s" % tar_name
+		shutil.move("/tmp/afl_sync.tar.gz", tar_name)
