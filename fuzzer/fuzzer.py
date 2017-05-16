@@ -59,10 +59,12 @@ class InfiniteTimer():
 class Fuzzer(object):
     ''' Fuzzer object, spins up a fuzzing job on a binary '''
 
-    def __init__(self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None, memory="8G",
-            target_opts=None, extra_opts=None, create_dictionary=False,
-            seeds=None, crash_mode=False, never_resume=False, qemu=True, stuck_callback=None,
-                 force_interval=None):
+    def __init__(
+        self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None, memory="8G",
+        target_opts=None, extra_opts=None, create_dictionary=False,
+        seeds=None, crash_mode=False, never_resume=False, qemu=True, stuck_callback=None,
+        force_interval=None
+    ):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
         :param work_dir: the work directory which contains fuzzing jobs, our job directory will go here
