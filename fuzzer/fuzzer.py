@@ -52,7 +52,8 @@ class InfiniteTimer():
             self._should_continue = False # Just in case thread is running and cancel fails.
             self.thread.cancel()
         else:
-            print "Timer never started or failed to initialize."
+            pass
+            #print "Timer never started or failed to initialize."
 
 
 
