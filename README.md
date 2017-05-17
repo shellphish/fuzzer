@@ -26,8 +26,18 @@ Then, install this fuzzer wrapper:
 ## Usage
 
 There are two ways of using this package.
-The easy way is to use the `shellphuzz` script, which allows you to specify various options, enable driller, etc.
+The easy way is to use the `shellphuzz` script, which allows you to specify various options, enable [driller](https://www.internetsociety.org/sites/default/files/blogs-media/driller-augmenting-fuzzing-through-selective-symbolic-execution.pdf), etc.
 The script has explanations about its usage with `--help`.
+
+A quick example:
+
+```
+# fuzz with 4 AFL cores
+shellphuzz -i -c 4 /path/to/binary
+
+# perform symbolic-assisted fuzzing with 4 AFL cores and 2 symbolic tracing (drilling) cores.
+shellphuzz -i -c 4 -d 4 /path/to/binary
+```
 
 You can also use it programmatically, but we have no documentation for that.
 For now, `import fuzzer` or look at the shellphuz script and figure it out ;-)

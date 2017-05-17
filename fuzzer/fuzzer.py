@@ -63,7 +63,7 @@ class Fuzzer(object):
         self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None, memory="8G",
         target_opts=None, extra_opts=None, create_dictionary=False,
         seeds=None, crash_mode=False, never_resume=False, qemu=True, stuck_callback=None,
-        force_interval=None
+        force_interval=None, job_dir=None
     ):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
@@ -79,6 +79,7 @@ class Fuzzer(object):
         :param qemu: Utilize QEMU for instrumentation of binary.
         :param memory: AFL child process memory limit (default: "8G")
         :param stuck_callback: the callback to call when afl has no pending fav's
+        :param job_dir: a job directory to override the work_dir/binary_name path
         '''
 
         self.binary_path    = binary_path
@@ -111,7 +112,7 @@ class Fuzzer(object):
 
         self.seeds          = ["fuzz"] if seeds is None or len(seeds) == 0 else seeds
 
-        self.job_dir  = os.path.join(self.work_dir, self.binary_id)
+        self.job_dir  = os.path.join(self.work_dir, self.binary_id) if not job_dir else job_dir
         self.in_dir   = os.path.join(self.job_dir, "input")
         self.out_dir  = os.path.join(self.job_dir, "sync")
 
@@ -170,7 +171,8 @@ class Fuzzer(object):
                 # set up libraries
                 self._export_library_path(p)
 
-        self.qemu_dir         = self.afl_path_var
+        self.qemu_name = p.arch.qemu_name
+        self.qemu_dir = self.afl_path_var
 
         l.debug("self.start_time: %r", self.start_time)
         l.debug("self.afl_path: %s", self.afl_path)
