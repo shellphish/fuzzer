@@ -6,5 +6,5 @@ setup(
     packages=['fuzzer', 'fuzzer.extensions'],
     data_files = [ ("bin", (os.path.join("bin", "create_dict.py"),)) ],
     scripts = [ 'shellphuzz' ],
-    install_requires=['angr', 'shellphish-qemu', 'shellphish-afl']
+    install_requires=['angr', 'shellphish-qemu', 'shellphish-afl', 'tqdm']
 )
