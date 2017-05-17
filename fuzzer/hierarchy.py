@@ -94,10 +94,14 @@ class Input(object):
         assert self.source_ids or self.orig
 
     def _resolve_sources(self):
-        if self.synced_from:
-            self.sources = [ self.hierarchy.instance_input(self.synced_from, self.source_ids[0]) ]
-        else:
-            self.sources = [ self.hierarchy.instance_input(self.instance, i) for i in self.source_ids ]
+        try:
+            if self.synced_from:
+                self.sources = [ self.hierarchy.instance_input(self.synced_from, self.source_ids[0]) ]
+            else:
+                self.sources = [ self.hierarchy.instance_input(self.instance, i) for i in self.source_ids ]
+        except KeyError as e:
+            l.warning("Unable to resolve source ID %s for %s", e, self)
+            self.sources = [ ]
 
     @property
     def filepath(self):
