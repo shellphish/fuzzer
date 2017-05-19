@@ -3,7 +3,6 @@ import re
 import tqdm
 import glob
 import logging
-import tempfile
 import networkx
 import subprocess
 import shellphish_qemu
@@ -176,46 +175,39 @@ class Input(object):
 
     @property
     def output(self):
-        outfile = tempfile.mktemp()
-        with open('/dev/null', 'w') as tf, open(outfile, 'w') as of, open(self.filepath) as sf:
+        with open('/dev/null', 'w') as tf, open(self.filepath) as sf:
             cmd_args = [
                 'timeout', '60', shellphish_qemu.qemu_path('cgc-tracer'),
                 self.hierarchy._fuzzer.binary_path
             ]
-            process = subprocess.Popen(cmd_args, stdin=sf, stdout=of, stderr=tf)
-            process.wait()
+            process = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=tf)
+            fuck, _ = process.communicate(sf.read())
 
-        with open(outfile) as of:
-            result = of.read()
-        os.unlink(outfile)
-        return result
+        return fuck
 
     @property
     def trace(self):
         if self._trace is not None:
             return self._trace
 
-        tracefile = tempfile.mktemp()
-        with open('/dev/null') as of, open(self.filepath) as sf:
+        with open(self.filepath) as sf:
             cmd_args = [
                 'timeout', '2',
                 shellphish_qemu.qemu_path('cgc-tracer'),
-                '-d', 'exec', '-D', tracefile,
+                '-d', 'exec',
                 self.hierarchy._fuzzer.binary_path
             ]
             #print "cat %s | %s" % (self.filepath, ' '.join(cmd_args))
-            process = subprocess.Popen(cmd_args, stdin=sf, stdout=of, stderr=of)
-            process.wait()
+            process = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            _, you = process.communicate(sf.read())
 
         trace = [ ]
-        with open(tracefile) as tf:
-            for tline in tf:
-                result = re.match(r'Trace 0x[0-9a-fA-F]* \[([0-9a-fA-F]*)\]', tline.strip())
-                if not result:
-                    continue
-                trace.append(int(result.group(1), base=16))
+        for tline in you.split('\n'):
+            result = re.match(r'Trace 0x[0-9a-fA-F]* \[([0-9a-fA-F]*)\]', tline.strip())
+            if not result:
+                continue
+            trace.append(int(result.group(1), base=16))
 
-        os.unlink(tracefile)
         self._trace = trace
         return trace
 
@@ -297,7 +289,33 @@ class InputHierarchy(object):
             cycles[0][0].sources[:] = [ ]
             return True
 
+    def triggered_blocks(self):
+        """
+        Gets the triggered blocks by all the testcases.
+        """
+        return set.union(*(i.block_set for i in tqdm.tqdm(self.inputs.values())))
+
+    def crashes(self):
+        """
+        Returns the crashes, if they are loaded.
+        """
+        return [ i for i in self.inputs.values() if i.crash ]
+
     def technique_contributions(self):
+        """
+        Get coverage and crashes by technique.
+        """
+        results = { }
+        for s,(b,c) in self.seed_contributions():
+            results.setdefault(s.instance.split('-')[0], [0,0])[0] += b
+            results.setdefault(s.instance.split('-')[0], [0,0])[1] += c
+        return results
+
+    def seed_contributions(self):
+        """
+        Get the seeds (including inputs introduced by extensions) that
+        resulted in coverage and crashes.
+        """
         sorted_inputs = sorted((
             i for i in self.inputs.values() if i.instance.startswith('fuzzer-')
         ), key=lambda j: j.timestamp)
