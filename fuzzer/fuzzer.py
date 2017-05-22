@@ -154,6 +154,7 @@ class Fuzzer(object):
             # XXX: There is no driller/angr support, and probably will never be.
             self.afl_path = shellphish_afl.afl_bin('multi-cgc')
             self.afl_path_var = shellphish_afl.afl_path_var('multi-cgc')
+            self.qemu_name = 'TODO'
         else:
 
             p = angr.Project(binary_path)
@@ -172,7 +173,9 @@ class Fuzzer(object):
                 # set up libraries
                 self._export_library_path(p)
 
-        self.qemu_name = p.arch.qemu_name
+            # the name of the qemu port used to run these binaries
+            self.qemu_name = p.arch.qemu_name
+
         self.qemu_dir = self.afl_path_var
 
         l.debug("self.start_time: %r", self.start_time)
