@@ -265,7 +265,8 @@ class Fuzzer(object):
             p.terminate()
             p.wait()
 
-        self._timer.cancel()
+        if hasattr(self, "_timer"):
+            self._timer.cancel()
 
         self._on = False
 
