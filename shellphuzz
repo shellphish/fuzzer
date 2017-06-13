@@ -14,7 +14,7 @@ import importlib
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Shellphish fuzzer interface")
-	parser.add_argument('binary', help="the binary")
+	parser.add_argument('binary', help="the path to the target binary to fuzz")
 	parser.add_argument('-g', '--grease-with', help="A directory of inputs to grease the fuzzer with when it gets stuck.")
 	parser.add_argument('-d', '--driller_workers', help="When the fuzzer gets stuck, drill with N workers.", type=int)
 	parser.add_argument('-f', '--force_interval', help="Force greaser/fuzzer assistance at a regular interval (in seconds).", type=float)
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
 	print "[*] Creating fuzzer..."
 	fuzzer = fuzzer.Fuzzer(
-		sys.argv[1], args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
+		args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
 		create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback
 	)
 
