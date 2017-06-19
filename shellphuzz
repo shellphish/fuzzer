@@ -11,6 +11,7 @@ import driller
 import tarfile
 import argparse
 import importlib
+import logging.config
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Shellphish fuzzer interface")
@@ -25,7 +26,11 @@ if __name__ == "__main__":
 	parser.add_argument('-T', '--tarball', help="Tarball the resulting AFL workdir for further analysis to this file -- '{}' is replaced with the hostname.")
 	parser.add_argument('-m', '--helper-module', help="A module that includes some helper scripts for seed selection and such.")
 	parser.add_argument('--no-dictionary', help="Do not create a dictionary before fuzzing.", action='store_true', default=False)
+        parser.add_argument('--logcfg', help="The logging configuration file.", default=".shellphuzz.ini")
 	args = parser.parse_args()
+
+        if os.path.isfile(os.path.join(os.getcwd(), args.logcfg)):
+                logging.config.fileConfig(os.path.join(os.getcwd(), args.logcfg))
 
 	try: os.mkdir("/dev/shm/work/")
 	except OSError: pass
