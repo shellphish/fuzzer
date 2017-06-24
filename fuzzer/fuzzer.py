@@ -651,7 +651,8 @@ class Fuzzer(object):
     def _timer_callback(self):
         if self._stuck_callback is not None:
             # check if afl has pending fav's
-            if int(self.stats['fuzzer-master']['pending_favs']) == 0 or self.force_interval is not None:
+            if ('fuzzer-master' in self.stats and 'pending_favs' in self.stats['fuzzer-master'] and \
+               int(self.stats['fuzzer-master']['pending_favs']) == 0) or self.force_interval is not None:
                 self._stuck_callback(self)
 
     def __del__(self):
