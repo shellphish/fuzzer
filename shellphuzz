@@ -21,6 +21,7 @@ if __name__ == "__main__":
 	parser.add_argument('-f', '--force_interval', help="Force greaser/fuzzer assistance at a regular interval (in seconds).", type=float)
 	parser.add_argument('-w', '--work-dir', help="The work directory for AFL.", default="/dev/shm/work/")
 	parser.add_argument('-c', '--afl-cores', help="Number of AFL workers to spin up.", default=1, type=int)
+	parser.add_argument('-C', '--first-crash', help="Stop on the first crash.", action='store_true', default=False)
 	parser.add_argument('-t', '--timeout', help="Timeout (in seconds).", type=float)
 	parser.add_argument('-i', '--ipython', help="Drop into ipython after starting the fuzzer.", action='store_true')
 	parser.add_argument('-T', '--tarball', help="Tarball the resulting AFL workdir for further analysis to this file -- '{}' is replaced with the hostname.")
@@ -65,7 +66,7 @@ if __name__ == "__main__":
 	print "[*] Creating fuzzer..."
 	fuzzer = fuzzer.Fuzzer(
 		args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
-		create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback
+		create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout
 	)
 
 	# start it!
@@ -73,16 +74,26 @@ if __name__ == "__main__":
 	fuzzer.start()
 	start_time = time.time()
 
-	if args.timeout:
-		print "[*] Sleeping for %d seconds." % args.timeout
-		try:
-			time.sleep(args.timeout)
-		except KeyboardInterrupt:
-			fuzzer.kill()
-			if drill_extension:
-				drill_extension.kill()
-			raise
-		print "[*] Hit timeout, done running!"
+	try:
+		if args.timeout or args.first_crash:
+			print "[*] Waiting for fuzzer completion (timeout: %s, first_crash: %s)." % (args.timeout, args.first_crash)
+
+			while True:
+				time.sleep(5)
+				if args.first_crash and fuzzer.found_crash():
+					print "[*] Crash found!"
+					break
+				if fuzzer.timed_out():
+					print "[*] Timeout reached."
+					break
+	except KeyboardInterrupt:
+		print "[*] Aborting wait. Ctrl-C again for KeyboardInterrupt."
+	except Exception as e:
+		print "[*] Unknown exception received (%s). Terminating fuzzer." % e
+		fuzzer.kill()
+		if drill_extension:
+			drill_extension.kill()
+		raise
 
 	if args.ipython:
 		print "[!]"
