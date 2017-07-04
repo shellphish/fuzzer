@@ -390,15 +390,17 @@ class Fuzzer(object):
 
         return list(crashes)
 
-    def crashes(self):
+    def crashes(self, signals=(signal.SIGSEGV, signal.SIGILL)):
         """
         Retrieve the crashes discovered by AFL. Since we are now detecting flag
         page leaks (via SIGUSR1) we will not return these leaks as crashes.
         Instead, these 'crashes' can be found with the leaks function.
+
+        :param signals: list of valid kill signal numbers to override the default (SIGSEGV and SIGILL)
         :return: a list of strings which are crashing inputs
         """
 
-        return self._get_crashing_inputs([signal.SIGSEGV, signal.SIGILL])
+        return self._get_crashing_inputs(signals)
 
     def queue(self, fuzzer='fuzzer-master'):
         '''
