@@ -12,13 +12,10 @@ print DIR,BIN
 f = fuzzer.Fuzzer('/results/bins/%s'%BIN, '', job_dir=DIR)
 h = fuzzer.InputHierarchy(fuzzer=f, load_crashes=True)
 
-def good(_i):
-    return _i.instance not in ('fuzzer-1', 'fuzzer-2', 'fuzzer-3', 'fuzzer-4', 'fuzzer-5')
-
 all_blocks = set()
 all_transitions = set()
-all_inputs = [ i for i in h.inputs.values() if not i.crash and good(i) ]
-all_crashes = [ i for i in h.inputs.values() if i.crash and good(i) ]
+all_inputs = [ i for i in h.inputs.values() if not i.crash ]
+all_crashes = [ i for i in h.inputs.values() if i.crash ]
 min_timestamp = min(i.timestamp for i in all_inputs)
 if all_crashes:
     first_crash = min(all_crashes, key=lambda i: i.timestamp)
