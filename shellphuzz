@@ -26,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--ipython', help="Drop into ipython after starting the fuzzer.", action='store_true')
     parser.add_argument('-T', '--tarball', help="Tarball the resulting AFL workdir for further analysis to this file -- '{}' is replaced with the hostname.")
     parser.add_argument('-m', '--helper-module', help="A module that includes some helper scripts for seed selection and such.")
+    parser.add_argument('--memory', help="Memory limit (in MB) to pass to AFL", default="8G")
     parser.add_argument('--no-dictionary', help="Do not create a dictionary before fuzzing.", action='store_true', default=False)
     parser.add_argument('--logcfg', help="The logging configuration file.", default=".shellphuzz.ini")
     args = parser.parse_args()
@@ -66,7 +67,8 @@ if __name__ == "__main__":
     print "[*] Creating fuzzer..."
     fuzzer = fuzzer.Fuzzer(
         args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
-        create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout
+        create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout,
+        memory=args.memory
     )
 
     # start it!
