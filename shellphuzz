@@ -72,28 +72,6 @@ if __name__ == "__main__":
     # start it!
     print "[*] Starting fuzzer..."
     fuzzer.start()
-    start_time = time.time()
-
-    try:
-        if args.timeout or args.first_crash:
-            print "[*] Waiting for fuzzer completion (timeout: %s, first_crash: %s)." % (args.timeout, args.first_crash)
-
-            while True:
-                time.sleep(5)
-                if args.first_crash and fuzzer.found_crash():
-                    print "[*] Crash found!"
-                    break
-                if fuzzer.timed_out():
-                    print "[*] Timeout reached."
-                    break
-    except KeyboardInterrupt:
-        print "[*] Aborting wait. Ctrl-C again for KeyboardInterrupt."
-    except Exception as e:
-        print "[*] Unknown exception received (%s). Terminating fuzzer." % e
-        fuzzer.kill()
-        if drill_extension:
-            drill_extension.kill()
-        raise
 
     if args.ipython:
         print "[!]"
@@ -104,6 +82,27 @@ if __name__ == "__main__":
         print "[!] grease_extension"
         print "[!]"
         import IPython; IPython.embed()
+
+    try:
+        print "[*] Waiting for fuzzer completion (timeout: %s, first_crash: %s)." % (args.timeout, args.first_crash)
+
+        while True:
+            time.sleep(5)
+            if fuzzer.found_crash():
+                print "[*] Crash found!"
+                if args.first_crash:
+                    break
+            if fuzzer.timed_out():
+                print "[*] Timeout reached."
+                break
+    except KeyboardInterrupt:
+        print "[*] Aborting wait. Ctrl-C again for KeyboardInterrupt."
+    except Exception as e:
+        print "[*] Unknown exception received (%s). Terminating fuzzer." % e
+        fuzzer.kill()
+        if drill_extension:
+            drill_extension.kill()
+        raise
 
     print "[*] Terminating fuzzer."
     fuzzer.kill()
