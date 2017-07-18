@@ -29,6 +29,7 @@ if __name__ == "__main__":
     parser.add_argument('--memory', help="Memory limit (in MB) to pass to AFL", default="8G")
     parser.add_argument('--no-dictionary', help="Do not create a dictionary before fuzzing.", action='store_true', default=False)
     parser.add_argument('--logcfg', help="The logging configuration file.", default=".shellphuzz.ini")
+    parser.add_argument('-s', '--seed-dir', action="append", help="Directory of files to seed fuzzer with")
     args = parser.parse_args()
 
     if os.path.isfile(os.path.join(os.getcwd(), args.logcfg)):
@@ -64,11 +65,23 @@ if __name__ == "__main__":
         else drill_extension or grease_extension
     )
 
+    seeds = None
+    if args.seed_dir:
+        seeds = []
+        print "[*] Seeding..."
+        for dirpath in args.seed_dir:
+            for filename in os.listdir(dirpath):
+                filepath = os.path.join(dirpath, filename)
+                if not os.path.isfile(filepath):
+                    continue
+                with open(filepath) as seedfile:
+                    seeds.append(seedfile.read())
+
     print "[*] Creating fuzzer..."
     fuzzer = fuzzer.Fuzzer(
         args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
         create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout,
-        memory=args.memory
+        memory=args.memory, seeds=seeds
     )
 
     # start it!
