@@ -51,7 +51,7 @@ class Showmap(object):
 
         # unfortunately here is some code reuse between Fuzzer and Minimizer (and Showmap!)
         p = angr.Project(self.binaries[0])
-        tracer_id = 'cgc' if p.loader.main_bin.os == 'cgc' else p.arch.qemu_name
+        tracer_id = 'cgc' if p.loader.main_object.os == 'cgc' else p.arch.qemu_name
         if self.is_multicb:
             tracer_id = 'multi-{}'.format(tracer_id)
 

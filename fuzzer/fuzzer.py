@@ -159,7 +159,7 @@ class Fuzzer(object):
 
             p = angr.Project(binary_path)
 
-            self.os = p.loader.main_bin.os
+            self.os = p.loader.main_object.os
 
             self.afl_dir          = shellphish_afl.afl_dir(self.os)
 

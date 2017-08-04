@@ -28,7 +28,7 @@ class Minimizer(object):
 
         # unfortunately here is some code reuse between Fuzzer and Minimizer
         p = angr.Project(self.binary_path)
-        tracer_id = 'cgc' if p.loader.main_bin.os == 'cgc' else p.arch.qemu_name
+        tracer_id = 'cgc' if p.loader.main_object.os == 'cgc' else p.arch.qemu_name
         self.tmin_path = os.path.join(shellphish_afl.afl_dir(tracer_id), "afl-tmin")
         self.afl_path_var = shellphish_afl.afl_path_var(tracer_id)
 
