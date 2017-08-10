@@ -39,7 +39,7 @@ def create(binary):
     string_references = []
     for v in cfg._memory_data.values():
         if v.sort == "string" and v.size > 1:
-            st = state.se.any_str(state.memory.load(v.address, v.size))
+            st = state.se.eval(state.memory.load(v.address, v.size), cast_to=str)
             string_references.append((v.address, st))
 
     strings = [] if len(string_references) == 0 else zip(*string_references)[1]
