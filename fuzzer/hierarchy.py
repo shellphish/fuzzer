@@ -163,9 +163,13 @@ class Input(object):
     @property
     def contributing_techniques(self):
         if self._contributing_techniques is None:
-            my_technique = frozenset([self.technique])
+            # don't count this current technique if we synced it
+            if self.synced_from:
+                new_technique = frozenset()
+            else:
+                new_technique = frozenset([self.technique])
             self._contributing_techniques = frozenset.union(
-                my_technique, *(i.contributing_techniques for i in self.sources)
+                new_technique, *(i.contributing_techniques for i in self.sources)
             )
         return self._contributing_techniques
 
