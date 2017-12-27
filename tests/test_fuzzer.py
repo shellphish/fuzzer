@@ -3,6 +3,7 @@ import nose
 import tempfile
 import subprocess
 import fuzzer
+import glob
 
 import logging
 l = logging.getLogger("fuzzer.tests.test_fuzzer")
@@ -65,6 +66,43 @@ def test_showmap():
 
     for te in true_dict.keys():
         nose.tools.assert_equal(true_dict[te], smap[te])
+
+def test_fuzzer_other_arch():
+    """
+    Test that fuzzer works fine on other archs
+    """
+
+    import logging
+    logging.getLogger("fuzzer").setLevel("DEBUG")
+
+    binary = os.path.join(bin_location, "tests/")
+    archs = [f for f in os.listdir(binary) if os.path.isdir(os.path.join(binary,f))]
+    for arch in archs:
+        arch_path = os.path.join(binary,arch)
+        binaries = [os.path.join(arch_path,b) for b in os.listdir(arch_path) if os.path.isfile(os.path.join(arch_path,b))]
+        if len(binaries) == 0:
+            depth_path = glob.glob(os.path.join(arch_path,'*/*/'))
+            dirs = filter(lambda f: os.path.isdir(f), depth_path)
+            if len(dirs) == 0:
+                continue
+            binaries = [[os.path.join(d,b) for b in os.listdir(d) if os.path.isfile(os.path.join(d,b))] for d in dirs]
+            if len(binaries) == 0:
+                continue
+        print "[*] Testing fuzzer on {0} for {1} binaries\n".format(arch, len(binaries))
+
+        f = fuzzer.Fuzzer(binaries, "bazinga")
+        f.start()
+
+        for _ in range(15):
+            if f.alive:
+                break
+            time.sleep(1)
+
+        nose.tools.assert_true(f.alive)
+
+        if f.alive:
+            f.kill()
+
 
 def test_fuzzer_spawn():
     """

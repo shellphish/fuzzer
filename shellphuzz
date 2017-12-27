@@ -12,6 +12,7 @@ import tarfile
 import argparse
 import importlib
 import logging.config
+from elftools.elf import elffile
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Shellphish fuzzer interface")
@@ -23,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--afl-cores', help="Number of AFL workers to spin up.", default=1, type=int)
     parser.add_argument('-C', '--first-crash', help="Stop on the first crash.", action='store_true', default=False)
     parser.add_argument('-t', '--timeout', help="Timeout (in seconds).", type=float)
+    parser.add_argument('-M', '--memory', help="Memory limitation")
     parser.add_argument('-i', '--ipython', help="Drop into ipython after starting the fuzzer.", action='store_true')
     parser.add_argument('-T', '--tarball', help="Tarball the resulting AFL workdir for further analysis to this file -- '{}' is replaced with the hostname.")
     parser.add_argument('-m', '--helper-module', help="A module that includes some helper scripts for seed selection and such.")
@@ -46,6 +48,7 @@ if __name__ == "__main__":
 
     drill_extension = None
     grease_extension = None
+    start_driller = True
 
     if args.grease_with:
         print "[*] Greasing..."
@@ -54,18 +57,27 @@ if __name__ == "__main__":
             grease_filter=helper_module.grease_filter if helper_module is not None else None,
             grease_sorter=helper_module.grease_sorter if helper_module is not None else None
         )
-    if args.driller_workers:
-        print "[*] Drilling..."
-        drill_extension = driller.LocalCallback(num_workers=args.driller_workers)
 
+    if args.driller_workers:
+        binary = elffile.ELFFile(open(args.binary,'r'))
+        e_machine = binary.header.e_machine
+        if e_machine in ('EM_SH', 'EM_S390', 'EM_ALPHA', 'EM_PARISC', 'EM_CRIS','EM_MICROBLAZE','EM_68HC12'):
+            start_driller = False
+            print "[-] Driller cannot guide fuzzing on this binary..."
+        else:
+            print "[*] Drilling..."
+            drill_extension = driller.LocalCallback(num_workers=args.driller_workers)
+
+    # FIXME: if binary not supported so start_driller = False and
+    # drill_extension = None
     stuck_callback = (
-        (lambda f: (grease_extension(f), drill_extension(f))) if drill_extension and grease_extension
-        else drill_extension or grease_extension
+        (lambda f: (grease_extension(f), drill_extension(f))) if (drill_extension and start_driller) and grease_extension
+        else drill_extension if is not None or grease_extension
     )
 
     print "[*] Creating fuzzer..."
     fuzzer = fuzzer.Fuzzer(
-        args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
+        args.binary, args.work_dir, memory=args.memory, afl_count=args.afl_cores, force_interval=args.force_interval,
         create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout
     )
 
