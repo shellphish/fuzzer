@@ -36,7 +36,7 @@ A quick example:
 shellphuzz -i -c 4 /path/to/binary
 
 # perform symbolic-assisted fuzzing with 4 AFL cores and 2 symbolic tracing (drilling) cores.
-shellphuzz -i -c 4 -d 4 /path/to/binary
+shellphuzz -i -c 4 -d 2 /path/to/binary
 ```
 
 You can also use it programmatically, but we have no documentation for that.
