@@ -7,7 +7,7 @@ import shutil
 import threading
 import subprocess
 import shellphish_afl
-
+from elftools.elf import elffile
 import logging
 
 l = logging.getLogger("fuzzer.fuzzer")
@@ -157,24 +157,51 @@ class Fuzzer(object):
             self.qemu_name = 'TODO'
         else:
 
-            p = angr.Project(binary_path)
+            # when CLE doesn't support specific arch then get arch using
+            # elftools and set the approporiate AFL_PATH environment variable
+            # https://github.com/eliben/pyelftools/blob/master/elftools/elf/enums.py
+            try:
+                p = angr.Project(binary_path)
+            except RuntimeError:
+                l.debug("CLE doesn't support this arch for now, so it means you can only use AFL_FUZZ without driller")
+                self.binary = elffile.ELFFile(open(self.binary_path,'r'))
+                self.e_machine = self.binary.header.e_machine
+                if self.e_machine == 'EM_SH':
+                    self.afl_path_var = shellphish_afl.afl_path_var('sh4')
+                elif self.e_machine == 'EM_S390':
+                    self.afl_path_var = shellphish_afl.afl_path_var('s390x')
+                elif self.e_machine == 'EM_ALPHA' or self.e_machine == 36902:
+                    self.afl_path_var = shellphish_afl.afl_path_var('alpha')
+                elif self.e_machine == "EM_PARISC":
+                    self.afl_path_var = shellphish_afl.afl_path_var('hppa')
+                elif self.e_machine == "EM_CRIS":
+                    self.afl_path_var = shellphish_afl.afl_path_var('cris')
+                elif self.e_machine == "EM_MICROBLAZE":
+                    self.afl_path_var = shellphish_afl.afl_path_var('microblaze')
+                elif self.e_machine == "EM_68HC12":
+                    self.afl_path_var = shellphish_afl.afl_path_var('m68k')
 
-            self.os = p.loader.main_object.os
+            try:
+                self.os = p.loader.main_object.os
 
-            self.afl_dir          = shellphish_afl.afl_dir(self.os)
+                self.afl_dir = shellphish_afl.afl_dir(self.os)
 
-            # the path to AFL capable of calling driller
-            self.afl_path         = shellphish_afl.afl_bin(self.os)
+                # the path to AFL capable of calling driller
+                self.afl_path = shellphish_afl.afl_bin(self.os)
 
-            if self.os == 'cgc':
-                self.afl_path_var = shellphish_afl.afl_path_var('cgc')
-            else:
-                self.afl_path_var = shellphish_afl.afl_path_var(p.arch.qemu_name)
-                # set up libraries
-                self._export_library_path(p)
+                if self.os == 'cgc':
+                    self.afl_path_var = shellphish_afl.afl_path_var('cgc')
+                else:
+                    self.afl_path_var = shellphish_afl.afl_path_var(p.arch.qemu_name)
+                    # set up libraries
+                    self._export_library_path(p)
 
-            # the name of the qemu port used to run these binaries
-            self.qemu_name = p.arch.qemu_name
+                # the name of the qemu port used to run these binaries
+                self.qemu_name = p.arch.qemu_name
+
+            except NameError:
+                self.afl_dir = shellphish_afl.afl_dir('unix')
+                self.afl_path = shellphish_afl.afl_bin('unix')
 
         self.qemu_dir = self.afl_path_var
 
