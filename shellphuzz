@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--seed-dir', action="append", help="Directory of files to seed fuzzer with")
     parser.add_argument('--run-timeout', help="Number of seconds permitted for each run of binary", type=int)
     parser.add_argument('--driller-timeout', help="Number of seconds to allow driller to run", type=int, default=10*60)
+    parser.add_argument('--length-extension', help="Try extending inputs to driller by this many bytes", type=int)
     args = parser.parse_args()
 
     if os.path.isfile(os.path.join(os.getcwd(), args.logcfg)):
@@ -60,7 +61,7 @@ if __name__ == "__main__":
         )
     if args.driller_workers:
         print "[*] Drilling..."
-        drill_extension = driller.LocalCallback(num_workers=args.driller_workers, worker_timeout=args.driller_timeout)
+        drill_extension = driller.LocalCallback(num_workers=args.driller_workers, worker_timeout=args.driller_timeout, length_extension=args.length_extension)
 
     stuck_callback = (
         (lambda f: (grease_extension(f), drill_extension(f))) if drill_extension and grease_extension
