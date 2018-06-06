@@ -104,10 +104,12 @@ if __name__ == "__main__":
     try:
         print "[*] Waiting for fuzzer completion (timeout: %s, first_crash: %s)." % (args.timeout, args.first_crash)
 
+        crash_seen = False
         while True:
             time.sleep(5)
-            if fuzzer.found_crash():
+            if not crash_seen and fuzzer.found_crash():
                 print "[*] Crash found!"
+                crash_seen = True
                 if args.first_crash:
                     break
             if fuzzer.timed_out():
