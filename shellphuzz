@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--ipython', help="Drop into ipython after starting the fuzzer.", action='store_true')
     parser.add_argument('-T', '--tarball', help="Tarball the resulting AFL workdir for further analysis to this file -- '{}' is replaced with the hostname.")
     parser.add_argument('-m', '--helper-module', help="A module that includes some helper scripts for seed selection and such.")
-    parser.add_argument('--memory', help="Memory limit (in MB) to pass to AFL", default="8G")
+    parser.add_argument('--memory', help="Memory limit to pass to AFL (MB, or use k, M, G, T suffixes)", default="8G")
     parser.add_argument('--no-dictionary', help="Do not create a dictionary before fuzzing.", action='store_true', default=False)
     parser.add_argument('--logcfg', help="The logging configuration file.", default=".shellphuzz.ini")
     parser.add_argument('-s', '--seed-dir', action="append", help="Directory of files to seed fuzzer with")
