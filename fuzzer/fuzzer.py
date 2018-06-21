@@ -64,7 +64,7 @@ class Fuzzer(object):
         self, binary_path, work_dir, afl_count=1, library_path=None, time_limit=None, memory="8G",
         target_opts=None, extra_opts=None, create_dictionary=False,
         seeds=None, crash_mode=False, never_resume=False, qemu=True, stuck_callback=None,
-        force_interval=None, job_dir=None
+        force_interval=None, job_dir=None, timeout=None
     ):
         '''
         :param binary_path: path to the binary to fuzz. List or tuple for multi-CB.
@@ -81,6 +81,7 @@ class Fuzzer(object):
         :param memory: AFL child process memory limit (default: "8G")
         :param stuck_callback: the callback to call when afl has no pending fav's
         :param job_dir: a job directory to override the work_dir/binary_name path
+        :param timeout: timeout for individual runs within AFL
         '''
 
         self.binary_path    = binary_path
@@ -93,6 +94,7 @@ class Fuzzer(object):
         self.memory         = memory
         self.qemu           = qemu
         self.force_interval = force_interval
+        self.timeout        = timeout
 
         Fuzzer._perform_env_checks()
 
@@ -529,6 +531,8 @@ class Fuzzer(object):
         # auto-calculate timeout based on the number of binaries
         if self.is_multicb:
             args += ["-t", "%d+" % (1000 * len(self.binary_path))]
+        elif self.timeout:
+            args += ["-t", "%d+" % self.timeout]
 
         args += ["--"]
         args += self.binary_path if self.is_multicb else [self.binary_path]
