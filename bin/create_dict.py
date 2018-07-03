@@ -32,7 +32,7 @@ strcnt = itertools.count()
 def create(binary):
 
     b = angr.Project(binary, load_options={'auto_load_libs': False})
-    cfg = b.analyses.CFG(resolve_indirect_jumps=True, collect_data_references=True)
+    cfg = b.analyses.CFG(enable_indirect_jump_resolvers=True, collect_data_references=True)
 
     state = b.factory.blank_state()
 
