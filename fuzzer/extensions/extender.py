@@ -3,7 +3,6 @@ import sys
 import time
 import random
 import struct
-import operator
 import tempfile
 import subprocess
 import shellphish_qemu
@@ -130,12 +129,12 @@ class Extender(object):
 
         _ = self._run_qemu(payload, ["-receive_count", lname])
 
-        with open(lname, "rb") as f:
+        with open(lname, "r") as f:
             receive_counts = f.read()
 
         os.remove(lname)
 
-        return map(lambda l: map(int, l.split()), receive_counts.split("\n")[:-1])
+        return [l.split() for l in receive_counts.split('\n')[:-1]]
 
     def _new_crash(self, payload):
 
@@ -200,7 +199,7 @@ class Extender(object):
     def _new_mutation(payload, extend_amount):
 
         def random_string(n):
-            return ''.join([random.choice(map(chr, range(1, 9) + range(11, 256))) for _ in xrange(n)])
+            return bytes(random.choice(list(range(1, 9)) + list(range(11, 256))) for _ in range(n))
 
         np = payload + random_string(extend_amount + random.randint(0, 0x1000))
         l.debug("New mutation of length %d", len(np))
@@ -234,8 +233,9 @@ class Extender(object):
                 return int(attrs["id"])
             return 0
 
-        other_fuzzers = filter(lambda d: d != self.name,  os.listdir(self.sync_dir))
-        for fuzzer in other_fuzzers:
+        for fuzzer in os.listdir(self.sync_dir):
+            if fuzzer == self.name:
+                continue
             l.debug("Looking to extend inputs in fuzzer '%s'", fuzzer)
 
             self.current_fuzzer = fuzzer
@@ -253,12 +253,12 @@ class Extender(object):
 
             queue_dir = os.path.join(self.sync_dir, fuzzer, "queue")
 
-            queue_l = filter(lambda n: n != ".state", os.listdir(queue_dir))
-            new_q = map(operator.itemgetter(1), filter(lambda i: i[0] >= synced, zip(map(_extract_number, queue_l), queue_l)))
+            queue_l = [n for n in os.listdir(queue_dir) if n != '.state']
+            new_q = [i for i in queue_l if _extract_number(i) >= synced]
 
             crash_dir = os.path.join(self.sync_dir, fuzzer, "crashes")
-            crash_l = filter(lambda n: n != "README.txt", os.listdir(crash_dir))
-            new_c = map(operator.itemgetter(1), filter(lambda i: i[0] >= c_synced, zip(map(_extract_number, crash_l), crash_l)))
+            crash_l = [n for n in os.listdir(crash_dir) if n != 'README.txt']
+            new_c = [i for i in crash_l if _extract_number(i) >= c_synced]
             new = new_q + new_c
             if len(new):
                 l.info("Found %d new inputs to extend", len(new))
