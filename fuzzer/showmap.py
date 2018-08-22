@@ -23,7 +23,7 @@ class Showmap(object):
         self.testcase = testcase
         self.timeout = None
 
-        if isinstance(binary_path, basestring):
+        if isinstance(binary_path, str):
             self.is_multicb = False
             self.binaries = [binary_path]
         elif isinstance(binary_path, (list,tuple)):
@@ -76,7 +76,7 @@ class Showmap(object):
         l.debug("output: %s", self.output)
 
         # populate contents of input testcase
-        with open(self.input_testcase, 'w') as f:
+        with open(self.input_testcase, 'wb') as f:
             f.write(testcase)
 
     def __del__(self):

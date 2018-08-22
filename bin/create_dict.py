@@ -17,12 +17,12 @@ def hexescape(s):
     '''
 
     out = []
-    acceptable = string.ascii_letters + string.digits + " ."
+    acceptable = (string.ascii_letters + string.digits + " .").encode()
     for c in s:
         if c not in acceptable:
-            out.append("\\x%02x" % ord(c))
+            out.append("\\x%02x" % c)
         else:
-            out.append(c)
+            out.append(chr(c))
 
     return ''.join(out)
 
@@ -42,7 +42,7 @@ def create(binary):
             st = state.se.eval(state.memory.load(v.address, v.size), cast_to=bytes)
             string_references.append((v.address, st))
 
-    strings = [] if len(string_references) == 0 else list(zip(*string_references)[1])
+    strings = [] if len(string_references) == 0 else list(list(zip(*string_references))[1])
 
     valid_strings = []
     if len(strings) > 0:
@@ -56,7 +56,7 @@ def create(binary):
 
     for s in set(valid_strings):
         s_val = hexescape(s)
-        print( "string_%d=\"%s\"" % (strcnt.next(), s_val))
+        print("string_%d=\"%s\"" % (next(strcnt), s_val))
 
 
 def main(argv):
@@ -70,7 +70,7 @@ def main(argv):
         if os.path.isfile(binary):
             create(binary)
 
-    return int(strcnt.next() == 0)
+    return int(next(strcnt) == 0)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

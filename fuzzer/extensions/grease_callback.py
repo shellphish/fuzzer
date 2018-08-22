@@ -35,7 +35,7 @@ class GreaseCallback(object):
             smap = Showmap(fuzz.binary_path, seed_content)
             shownmap = smap.showmap()
             for k in shownmap:
-                #print shownmap[k], (ord(bitmap[k % len(bitmap)]) ^ 0xff)
+                #print(shownmap[k], (ord(bitmap[k % len(bitmap)]) ^ 0xff))
                 if shownmap[k] > (ord(bitmap[k % len(bitmap)]) ^ 0xff):
                     l.warning("Found interesting, syncing to tests")
 

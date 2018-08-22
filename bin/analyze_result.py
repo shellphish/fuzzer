@@ -8,7 +8,7 @@ import fuzzer
 
 DIR = sys.argv[1].rstrip('/')
 BIN = os.path.basename(DIR).split('-')[-1]
-print DIR,BIN
+print(DIR,BIN)
 f = fuzzer.Fuzzer('/results/bins/%s'%BIN, '', job_dir=DIR)
 h = fuzzer.InputHierarchy(fuzzer=f, load_crashes=True)
 
@@ -63,15 +63,15 @@ results = {
     'transitions_triggered': len(all_transitions),
 }
 
-print ""
-for k,v in results.iteritems():
-    print "RESULT", results['tag'], results['bin'], k, v
-print ""
-print "JSON", json.dumps(results)
+print("")
+for k,v in results.items():
+    print("RESULT", results['tag'], results['bin'], k, v)
+print("")
+print("JSON", json.dumps(results))
 
-#print "RESULT",tag,BIN,": fuzzer blocks:",tc.get('fuzzer', (0,0))[0]
-#print "RESULT",tag,BIN,": driller blocks:",tc.get('driller', (0,0))[0]
-#print "RESULT",tag,BIN,": grease blocks:",tc.get('grease', (0,0))[0]
-#print "RESULT",tag,BIN,": fuzzer crashes:",tc.get('fuzzer', (0,0))[1]
-#print "RESULT",tag,BIN,": driller crashes:",tc.get('driller', (0,0))[1]
-#print "RESULT",tag,BIN,": grease crashes:",tc.get('grease', (0,0))[1]
+#print("RESULT",tag,BIN,": fuzzer blocks:",tc.get('fuzzer', (0,0))[0])
+#print("RESULT",tag,BIN,": driller blocks:",tc.get('driller', (0,0))[0])
+#print("RESULT",tag,BIN,": grease blocks:",tc.get('grease', (0,0))[0])
+#print("RESULT",tag,BIN,": fuzzer crashes:",tc.get('fuzzer', (0,0))[1])
+#print("RESULT",tag,BIN,": driller crashes:",tc.get('driller', (0,0))[1])
+#print("RESULT",tag,BIN,": grease crashes:",tc.get('grease', (0,0))[1])
