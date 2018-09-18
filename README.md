@@ -11,7 +11,7 @@ Shellphish used it in Mechanical Phish (our CRS for the Cyber Grand Challenge) t
 The fuzzer has some dependencies.
 First, here's a probably-incomplete list of debian packages that might be useful:
 
-    sudo apt-get install build-essential gcc-multilib libtool automake autoconf bison debootstrap debian-archive-keyring
+    sudo apt-get install build-essential gcc-multilib libtool automake autoconf bison debootstrap debian-archive-keyring libtool-bin
     sudo apt-get build-dep qemu
 
 Then, the fuzzer also depends on `shellphish-afl`, which is a pip package that actually includes AFL:
