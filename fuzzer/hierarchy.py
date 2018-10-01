@@ -133,9 +133,9 @@ class Input(object):
 
     def print_lineage(self, depth=0):
         if depth:
-            print ' '*depth + str(self)
+            print(' '*depth + str(self))
         else:
-            print self
+            print(self)
         for parent in self.sources:
             parent.print_lineage(depth=depth+1)
 
@@ -201,7 +201,7 @@ class Input(object):
                 '-d', 'exec',
                 self.hierarchy._fuzzer.binary_path
             ]
-            #print "cat %s | %s" % (self.filepath, ' '.join(cmd_args))
+            #print("cat %s | %s" % (self.filepath, ' '.join(cmd_args)))
             process = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             _, you = process.communicate(sf.read())
 
@@ -337,7 +337,7 @@ class InputHierarchy(object):
                 contributions.setdefault(o, (set(),set()))[0].update(c)
                 found |= c
 
-        return sorted(((k, map(len,v)) for k,v in contributions.iteritems()), key=lambda x: x[0].timestamp)
+        return sorted(((k, list(map(len,v))) for k,v in contributions.iteritems()), key=lambda x: x[0].timestamp)
 
     def reload(self, load_crashes):
         self._load_instances()

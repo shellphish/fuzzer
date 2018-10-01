@@ -45,7 +45,7 @@ class InfiniteTimer():
             self._should_continue = True
             self._start_timer()
         else:
-            print "Timer already started or running, please wait if you're restarting."
+            print("Timer already started or running, please wait if you're restarting.")
 
     def cancel(self):
         if self.thread is not None:
@@ -53,7 +53,7 @@ class InfiniteTimer():
             self.thread.cancel()
         else:
             pass
-            #print "Timer never started or failed to initialize."
+            #print("Timer never started or failed to initialize.")
 
 
 
@@ -98,7 +98,7 @@ class Fuzzer(object):
 
         Fuzzer._perform_env_checks()
 
-        if isinstance(binary_path,basestring):
+        if isinstance(binary_path, str):
             self.is_multicb = False
             self.binary_id = os.path.basename(binary_path)
         elif isinstance(binary_path,(list,tuple)):
@@ -113,7 +113,7 @@ class Fuzzer(object):
                 raise ValueError("Seeds must be specified if using the fuzzer in crash mode")
             l.info("AFL will be started in crash mode")
 
-        self.seeds          = ["fuzz"] if seeds is None or len(seeds) == 0 else seeds
+        self.seeds          = [b"fuzz"] if seeds is None or len(seeds) == 0 else seeds
 
         self.job_dir  = os.path.join(self.work_dir, self.binary_id) if not job_dir else job_dir
         self.in_dir   = os.path.join(self.job_dir, "input")
@@ -283,7 +283,7 @@ class Fuzzer(object):
                 if os.path.isfile(stat_path):
                     stats[fuzzer_dir] = {}
 
-                    with open(stat_path, "rb") as f:
+                    with open(stat_path, "r") as f:
                         stat_blob = f.read()
                         stat_lines = stat_blob.split("\n")[:-1]
                         for stat in stat_lines:
@@ -414,7 +414,7 @@ class Fuzzer(object):
             raise ValueError("fuzzer '%s' does not exist" % fuzzer)
 
         queue_path = os.path.join(self.out_dir, fuzzer, 'queue')
-        queue_files = filter(lambda x: x != ".state", os.listdir(queue_path))
+        queue_files = list(filter(lambda x: x != ".state", os.listdir(queue_path)))
 
         queue_l = [ ]
         for q in queue_files:

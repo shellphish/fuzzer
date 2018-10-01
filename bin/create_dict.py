@@ -17,12 +17,12 @@ def hexescape(s):
     '''
 
     out = []
-    acceptable = string.letters + string.digits + " ."
+    acceptable = (string.ascii_letters + string.digits + " .").encode()
     for c in s:
         if c not in acceptable:
-            out.append("\\x%02x" % ord(c))
+            out.append("\\x%02x" % c)
         else:
-            out.append(c)
+            out.append(chr(c))
 
     return ''.join(out)
 
@@ -39,10 +39,10 @@ def create(binary):
     string_references = []
     for v in cfg._memory_data.values():
         if v.sort == "string" and v.size > 1:
-            st = state.se.eval(state.memory.load(v.address, v.size), cast_to=str)
+            st = state.solver.eval(state.memory.load(v.address, v.size), cast_to=bytes)
             string_references.append((v.address, st))
 
-    strings = [] if len(string_references) == 0 else zip(*string_references)[1]
+    strings = [] if len(string_references) == 0 else list(list(zip(*string_references))[1])
 
     valid_strings = []
     if len(strings) > 0:
@@ -56,21 +56,21 @@ def create(binary):
 
     for s in set(valid_strings):
         s_val = hexescape(s)
-        print "string_%d=\"%s\"" % (strcnt.next(), s_val)
+        print("string_%d=\"%s\"" % (next(strcnt), s_val))
 
 
 def main(argv):
 
     if len(argv) < 2:
         l.error("incorrect number of arguments passed to create_dict")
-        print "usage: %s [binary1] [binary2] [binary3] ... " % sys.argv[0]
+        print("usage: %s [binary1] [binary2] [binary3] ... " % sys.argv[0])
         return 1
 
     for binary in argv[1:]:
         if os.path.isfile(binary):
             create(binary)
 
-    return int(strcnt.next() == 0)
+    return int(next(strcnt) == 0)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

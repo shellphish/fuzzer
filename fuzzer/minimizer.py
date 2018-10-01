@@ -50,7 +50,7 @@ class Minimizer(object):
         l.debug("output_testcase: %s", self.output_testcase)
 
         # populate contents of input testcase
-        with open(self.input_testcase, 'w') as f:
+        with open(self.input_testcase, 'wb') as f:
             f.write(testcase)
 
     def __del__(self):
@@ -62,7 +62,7 @@ class Minimizer(object):
 
         self._start_minimizer().wait()
 
-        with open(self.output_testcase) as f: result = f.read()
+        with open(self.output_testcase, 'rb') as f: result = f.read()
 
         shutil.rmtree(self.work_dir)
         self._removed = True
@@ -86,5 +86,5 @@ class Minimizer(object):
         l.debug("execing: %s > %s", " ".join(args), outfile)
 
         outfile = os.path.join(self.work_dir, outfile)
-        with open(outfile, "w") as fp:
+        with open(outfile, "wb") as fp:
             return subprocess.Popen(args, stderr=fp)
