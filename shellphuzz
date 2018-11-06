@@ -53,14 +53,14 @@ if __name__ == "__main__":
     grease_extension = None
 
     if args.grease_with:
-        print "[*] Greasing..."
+        print ("[*] Greasing...")
         grease_extension = fuzzer.GreaseCallback(
             args.grease_with,
             grease_filter=helper_module.grease_filter if helper_module is not None else None,
             grease_sorter=helper_module.grease_sorter if helper_module is not None else None
         )
     if args.driller_workers:
-        print "[*] Drilling..."
+        print ("[*] Drilling...")
         drill_extension = driller.LocalCallback(num_workers=args.driller_workers, worker_timeout=args.driller_timeout, length_extension=args.length_extension)
 
     stuck_callback = (
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     seeds = None
     if args.seed_dir:
         seeds = []
-        print "[*] Seeding..."
+        print ("[*] Seeding...")
         for dirpath in args.seed_dir:
             for filename in os.listdir(dirpath):
                 filepath = os.path.join(dirpath, filename)
@@ -80,57 +80,57 @@ if __name__ == "__main__":
                 with open(filepath) as seedfile:
                     seeds.append(seedfile.read())
 
-    print "[*] Creating fuzzer..."
+    print ("[*] Creating fuzzer...")
     fuzzer = fuzzer.Fuzzer(
         args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
         create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout,
-        memory=args.memory, seeds=seeds, timeout=args.run_timeout
+        memory=args.memory, seeds=seeds, timeout=args.run_timeout, protocol_fuzz=args.opc_afl,
     )
 
     # start it!
-    print "[*] Starting fuzzer..."
+    print ("[*] Starting fuzzer...")
     fuzzer.start()
 
     if args.ipython:
-        print "[!]"
-        print "[!] Launching ipython shell. Relevant variables:"
-        print "[!]"
-        print "[!] fuzzer"
-        print "[!] driller_extension"
-        print "[!] grease_extension"
-        print "[!]"
+        print ("[!]")
+        print ("[!] Launching ipython shell. Relevant variables:")
+        print ("[!]")
+        print ("[!] fuzzer")
+        print ("[!] driller_extension")
+        print ("[!] grease_extension")
+        print ("[!]")
         import IPython; IPython.embed()
 
     try:
-        print "[*] Waiting for fuzzer completion (timeout: %s, first_crash: %s)." % (args.timeout, args.first_crash)
+        print ("[*] Waiting for fuzzer completion (timeout: %s, first_crash: %s)." % (args.timeout, args.first_crash))
 
         crash_seen = False
         while True:
             time.sleep(5)
             if not crash_seen and fuzzer.found_crash():
-                print "[*] Crash found!"
+                print ("[*] Crash found!")
                 crash_seen = True
                 if args.first_crash:
                     break
             if fuzzer.timed_out():
-                print "[*] Timeout reached."
+                print ("[*] Timeout reached.")
                 break
     except KeyboardInterrupt:
-        print "[*] Aborting wait. Ctrl-C again for KeyboardInterrupt."
+        print ("[*] Aborting wait. Ctrl-C again for KeyboardInterrupt.")
     except Exception as e:
-        print "[*] Unknown exception received (%s). Terminating fuzzer." % e
+        print ("[*] Unknown exception received (%s). Terminating fuzzer." % e)
         fuzzer.kill()
         if drill_extension:
             drill_extension.kill()
         raise
 
-    print "[*] Terminating fuzzer."
+    print ("[*] Terminating fuzzer.")
     fuzzer.kill()
     if drill_extension:
         drill_extension.kill()
 
     if args.tarball:
-        print "[*] Dumping results..."
+        print ("[*] Dumping results...")
         p = os.path.join("/tmp/", "afl_sync")
         try:
             shutil.rmtree(p)
@@ -143,5 +143,5 @@ if __name__ == "__main__":
         tar = tarfile.open("/tmp/afl_sync.tar.gz", "w:gz")
         tar.add(p, arcname=socket.gethostname()+'-'+os.path.basename(args.binary))
         tar.close()
-        print "[*] Copying out result tarball to %s" % tar_name
+        print ("[*] Copying out result tarball to %s" % tar_name)
         shutil.move("/tmp/afl_sync.tar.gz", tar_name)
