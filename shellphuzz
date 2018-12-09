@@ -84,7 +84,7 @@ if __name__ == "__main__":
     fuzzer = fuzzer.Fuzzer(
         args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
         create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout,
-        memory=args.memory, seeds=seeds, timeout=args.run_timeout, protocol_fuzz=args.opc_afl,
+        memory=args.memory, seeds=seeds, timeout=args.run_timeout,
     )
 
     # start it!
