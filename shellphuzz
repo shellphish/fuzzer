@@ -77,7 +77,7 @@ if __name__ == "__main__":
                 filepath = os.path.join(dirpath, filename)
                 if not os.path.isfile(filepath):
                     continue
-                with open(filepath) as seedfile:
+                with open(filepath, 'rb') as seedfile:
                     seeds.append(seedfile.read())
 
     print ("[*] Creating fuzzer...")
