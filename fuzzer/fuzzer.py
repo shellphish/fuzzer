@@ -462,7 +462,7 @@ class Fuzzer(object):
         pollen_cnt = len(os.listdir(nectary_queue_directory))
 
         for tcase in testcases:
-            with open(os.path.join(nectary_queue_directory, "id:%06d,src:pollenation" % pollen_cnt), "w") as f:
+            with open(os.path.join(nectary_queue_directory, "id:%06d,src:pollenation" % pollen_cnt), "wb") as f:
                 f.write(tcase)
 
             pollen_cnt += 1
