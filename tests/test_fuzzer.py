@@ -90,9 +90,6 @@ def test_multicb_spawn():
     Test that the fuzzer spins up for a multicb challenge.
     """
 
-    import logging
-    logging.getLogger("fuzzer").setLevel("DEBUG")
-
     binaries = [os.path.join(bin_location, "tests/cgc/251abc02_01"),
                 os.path.join(bin_location, "tests/cgc/251abc02_02")]
 
@@ -121,4 +118,5 @@ def run_all():
             all_functions[f]()
 
 if __name__ == "__main__":
+    logging.getLogger("fuzzer").setLevel("DEBUG")
     run_all()
