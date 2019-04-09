@@ -110,7 +110,7 @@ class Input(object):
         )
 
     def read(self):
-        with open(self.filepath) as f:
+        with open(self.filepath, 'rb') as f:
             return f.read()
 
     def __repr__(self):
@@ -194,7 +194,7 @@ class Input(object):
         if self._trace is not None:
             return self._trace
 
-        with open(self.filepath) as sf:
+        with open(self.filepath, 'rb') as sf:
             cmd_args = [
                 'timeout', '2',
                 shellphish_qemu.qemu_path('cgc-tracer'),
@@ -206,8 +206,8 @@ class Input(object):
             _, you = process.communicate(sf.read())
 
         trace = [ ]
-        for tline in you.split('\n'):
-            result = re.match(r'Trace 0x[0-9a-fA-F]* \[([0-9a-fA-F]*)\]', tline.strip())
+        for tline in you.split(b'\n'):
+            result = re.match(b'Trace 0x[0-9a-fA-F]* \\[([0-9a-fA-F]*)\\]', tline.strip())
             if not result:
                 continue
             trace.append(int(result.group(1), base=16))
