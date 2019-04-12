@@ -1,8 +1,8 @@
-# Fuzzer
+# Phuzzer
 
-This module provides a Python wrapper for interacting with AFL (American Fuzzy Lop: http://lcamtuf.coredump.cx/afl/).
+This module provides a Python wrapper for interacting with fuzzers, such as AFL (American Fuzzy Lop: http://lcamtuf.coredump.cx/afl/).
 It supports starting an AFL instance, adding slave workers, injecting and retrieving testcases, and checking various performance metrics.
-Shellphish used it in Mechanical Phish (our CRS for the Cyber Grand Challenge) to interact with AFL.
+It is based on the module that Shellphish used in Mechanical Phish (our CRS for the Cyber Grand Challenge) to interact with AFL.
 
 ## Installation
 

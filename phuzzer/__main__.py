@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import os
-import sys
 import imp
 import time
-import fuzzer
 import shutil
 import socket
 import driller
@@ -13,7 +11,10 @@ import argparse
 import importlib
 import logging.config
 
-if __name__ == "__main__":
+from . import Phuzzer
+from . import GreaseCallback
+
+def main():
     parser = argparse.ArgumentParser(description="Shellphish fuzzer interface")
     parser.add_argument('binary', help="the path to the target binary to fuzz")
     parser.add_argument('-g', '--grease-with', help="A directory of inputs to grease the fuzzer with when it gets stuck.")
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     if args.grease_with:
         print ("[*] Greasing...")
-        grease_extension = fuzzer.GreaseCallback(
+        grease_extension = GreaseCallback(
             args.grease_with,
             grease_filter=helper_module.grease_filter if helper_module is not None else None,
             grease_sorter=helper_module.grease_sorter if helper_module is not None else None
@@ -81,7 +82,7 @@ if __name__ == "__main__":
                     seeds.append(seedfile.read())
 
     print ("[*] Creating fuzzer...")
-    fuzzer = fuzzer.Fuzzer(
+    fuzzer = Phuzzer(
         args.binary, args.work_dir, afl_count=args.afl_cores, force_interval=args.force_interval,
         create_dictionary=not args.no_dictionary, stuck_callback=stuck_callback, time_limit=args.timeout,
         memory=args.memory, seeds=seeds, timeout=args.run_timeout,
@@ -145,3 +146,6 @@ if __name__ == "__main__":
         tar.close()
         print ("[*] Copying out result tarball to %s" % tar_name)
         shutil.move("/tmp/afl_sync.tar.gz", tar_name)
+
+if __name__ == "__main__":
+    main()

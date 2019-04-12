@@ -4,13 +4,13 @@ import os
 import sys
 import tqdm
 import json
-import fuzzer
+import phuzzer
 
 DIR = sys.argv[1].rstrip('/')
 BIN = os.path.basename(DIR).split('-')[-1]
 print(DIR,BIN)
-f = fuzzer.Fuzzer('/results/bins/%s'%BIN, '', job_dir=DIR)
-h = fuzzer.InputHierarchy(fuzzer=f, load_crashes=True)
+f = phuzzer.Phuzzer('/results/bins/%s'%BIN, '', job_dir=DIR)
+h = phuzzer.InputHierarchy(fuzzer=f, load_crashes=True)
 
 def good(_i):
     return _i.instance not in ('fuzzer-1', 'fuzzer-2', 'fuzzer-3', 'fuzzer-4', 'fuzzer-5')

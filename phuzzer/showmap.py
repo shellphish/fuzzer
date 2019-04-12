@@ -4,12 +4,11 @@ import shutil
 import tempfile
 import subprocess
 import shellphish_afl
-from .fuzzer import Fuzzer
 
 import logging
-l = logging.getLogger("fuzzer.Showmap")
+l = logging.getLogger("phuzzer.Showmap")
 
-class Showmap(object):
+class Showmap:
     """Show map"""
 
     def __init__(self, binary_path, testcase, timeout=None):
@@ -34,22 +33,21 @@ class Showmap(object):
                 "It's {} instead.".format(type(binary_path)))
 
         if timeout is not None:
-            if isinstance(timeout, (int, long)):
+            if isinstance(timeout, int):
                 self.timeout = str(timeout)
             elif isinstance(timeout, (str)):
                 self.timeout = timeout
+            elif isinstance(timeout, (bytes)):
+                self.timeout = timeout.decode('utf-8')
             else:
                 raise ValueError("timeout param must be of type int or str")
 
         # will be set by showmap's return code
         self.causes_crash = False
 
-        Fuzzer._perform_env_checks()
+        AFL.check_environment()
 
-        self.base = Fuzzer._get_base()
-        l.debug("got base dir %s", self.base)
-
-        # unfortunately here is some code reuse between Fuzzer and Minimizer (and Showmap!)
+        # unfortunately here is some code reuse between Phuzzer and Minimizer (and Showmap!)
         p = angr.Project(self.binaries[0])
         tracer_id = 'cgc' if p.loader.main_object.os == 'cgc' else p.arch.qemu_name
         if self.is_multicb:
@@ -125,3 +123,5 @@ class Showmap(object):
         outfile = os.path.join(self.work_dir, outfile)
         with open(outfile, "w") as fp, open(self.input_testcase, 'rb') as it, open("/dev/null", 'wb') as devnull:
             return subprocess.Popen(args, stdin=it, stdout=devnull, stderr=fp, close_fds=True)
+
+from .phuzzers import AFL

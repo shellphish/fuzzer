@@ -1,7 +1,7 @@
 import os
 import shutil
 import logging
-from fuzzer import Showmap
+from .. import Showmap
 
 l = logging.getLogger("grease_callback")
 

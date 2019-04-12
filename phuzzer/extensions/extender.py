@@ -7,7 +7,7 @@ import tempfile
 import subprocess
 import shellphish_qemu
 
-from fuzzer.showmap import Showmap
+from ..showmap import Showmap
 
 import logging
 l = logging.getLogger("fuzzer.extensions.Extender")

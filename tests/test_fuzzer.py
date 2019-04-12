@@ -1,8 +1,5 @@
 import time
-import nose
-import tempfile
-import subprocess
-import fuzzer
+import phuzzer
 
 import logging
 l = logging.getLogger("fuzzer.tests.test_fuzzer")
@@ -17,24 +14,12 @@ def test_dictionary_creation_cgc():
     '''
 
     binary = os.path.join(bin_location, "tests/cgc/ccf3d301_01")
-    out_dict = tempfile.mktemp(prefix='fuzztest', dir='/tmp')
-
-    args = [os.path.join(fuzzer_bin, 'create_dict.py'), binary]
-
-    with open(out_dict, "wb") as f:
-        p = subprocess.Popen(args, stdout=f)
-
-    retcode = p.wait()
-
-    nose.tools.assert_equal(retcode, 0)
-
-    dict_data = open(out_dict).read()
-    os.remove(out_dict)
-
-    definitions = dict_data.split("\n")
-
-    # assert we find just as definitions
-    nose.tools.assert_true(len(definitions) >= 60)
+    afl = phuzzer.AFL(binary, create_dictionary=True, resume=False)
+    assert len(afl.dictionary) >= 60
+    assert not os.path.exists(afl.dictionary_file)
+    afl.start()
+    assert os.path.exists(afl.dictionary_file)
+    afl.stop()
 
 def test_minimizer():
     """
@@ -45,9 +30,9 @@ def test_minimizer():
 
     crash = bytes.fromhex('66757fbeff10ff7f1c3131313131413131317110314301000080006980009fdce6fecc4c66747fbeffffff7f1c31313131314131313171793143cfcfcfcfcfcfcf017110314301000000003e3e3e3e3e413e3e2e3e3e383e317110000000003e3e3e3e3e413e3e2e3e3e383e31713631310031103c3b6900ff3e3131413131317110313100000000006900ff91dce6fecc7e6e000200fecc4c66747fbeffffff7f1c31313131314131313171793143cf003100000000006900ff91dcc3c3c3479fdcffff084c3131313133313141314c6f00003e3e3e3e30413e3e2e3e3e383e31712a000000003e3e3e3e3eedededededededededededededededededededededededededededededededededededededededededede0dadada4c4c4c4c333054c4c4c401000000fb6880009fdce6fecc4c66757fbeffffff7f1c31313131314131313171793143cfcfcfcfcfcfcf017110314301000000003e3e3e3e3e413e3e2e343e383e317110000000003e3e3e3e3e413e3e2e3e3e383e31713631310031103c3b6900ff3e3131413131317110313100000000006900ff91dce6fecc7e6e000200003100000000006900ff91dcc3c3c3479fdcffff084c0d0d0d0d0dfa1d7f')
 
-    m = fuzzer.Minimizer(binary, crash)
+    m = phuzzer.Minimizer(binary, crash)
 
-    nose.tools.assert_equal(m.minimize(), b'100')
+    assert m.minimize() == b'100'
 
 def test_showmap():
     """
@@ -60,11 +45,11 @@ def test_showmap():
 
     testcase = b"hello"
 
-    s = fuzzer.Showmap(binary, testcase)
+    s = phuzzer.Showmap(binary, testcase)
     smap = s.showmap()
 
-    for te in true_dict.keys():
-        nose.tools.assert_equal(true_dict[te], smap[te])
+    for te in true_dict:
+        assert true_dict[te] == smap[te]
 
 def test_fuzzer_spawn():
     """
@@ -73,7 +58,7 @@ def test_fuzzer_spawn():
 
     binary = os.path.join(bin_location, "tests/cgc/PIZZA_00001")
 
-    f = fuzzer.Fuzzer(binary, "work")
+    f = phuzzer.AFL(binary, resume=False)
     f.start()
 
     for _ in range(15):
@@ -81,19 +66,18 @@ def test_fuzzer_spawn():
             break
         time.sleep(1)
 
-    nose.tools.assert_true(f.alive)
+    assert f.alive
     if f.alive:
-        f.kill()
+        f.stop()
 
 def test_multicb_spawn():
     """
     Test that the fuzzer spins up for a multicb challenge.
     """
-
     binaries = [os.path.join(bin_location, "tests/cgc/251abc02_01"),
                 os.path.join(bin_location, "tests/cgc/251abc02_02")]
 
-    f = fuzzer.Fuzzer(binaries, "work", create_dictionary=True)
+    f = phuzzer.AFLMultiCB(binaries, create_dictionary=True)
     f.start()
 
     for _ in range(15):
@@ -101,14 +85,13 @@ def test_multicb_spawn():
             break
         time.sleep(1)
 
-    nose.tools.assert_true(f.alive)
+    assert f.alive
 
-    dictionary_path = os.path.join("work", "251abc02_01", "251abc02_01.dict")
-
-    nose.tools.assert_true(os.path.isfile(dictionary_path))
+    dictionary_path = os.path.join(f.work_dir, "dict.txt")
+    assert os.path.isfile(dictionary_path)
 
     if f.alive:
-        f.kill()
+        f.stop()
 
 def run_all():
     functions = globals()
@@ -118,5 +101,5 @@ def run_all():
             all_functions[f]()
 
 if __name__ == "__main__":
-    logging.getLogger("fuzzer").setLevel("DEBUG")
+    logging.getLogger("phuzzer").setLevel("DEBUG")
     run_all()

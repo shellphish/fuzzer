@@ -4,12 +4,11 @@ import shutil
 import tempfile
 import subprocess
 import shellphish_afl
-from .fuzzer import Fuzzer
 
 import logging
-l = logging.getLogger("fuzzer.Minimizer")
+l = logging.getLogger("phuzzer.Minimizer")
 
-class Minimizer(object):
+class Minimizer:
     """Testcase minimizer"""
 
     def __init__(self, binary_path, testcase):
@@ -21,12 +20,9 @@ class Minimizer(object):
         self.binary_path = binary_path
         self.testcase = testcase
 
-        Fuzzer._perform_env_checks()
+        AFL.check_environment()
 
-        self.base = Fuzzer._get_base()
-        l.debug("got base dir %s", self.base)
-
-        # unfortunately here is some code reuse between Fuzzer and Minimizer
+        # unfortunately here is some code reuse between Phuzzer and Minimizer
         p = angr.Project(self.binary_path)
         tracer_id = 'cgc' if p.loader.main_object.os == 'cgc' else p.arch.qemu_name
         self.tmin_path = os.path.join(shellphish_afl.afl_dir(tracer_id), "afl-tmin")
@@ -88,3 +84,5 @@ class Minimizer(object):
         outfile = os.path.join(self.work_dir, outfile)
         with open(outfile, "wb") as fp:
             return subprocess.Popen(args, stderr=fp)
+
+from .phuzzers import AFL
