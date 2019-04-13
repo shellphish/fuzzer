@@ -366,7 +366,7 @@ class AFL(Phuzzer):
             fuzzer_id = "fuzzer-%d" % len(self.processes)
             args += ["-S", "fuzzer-%d" % len(fuzzer_id)]
 
-        if os.path.isdir(self.dictionary_file):
+        if os.path.exists(self.dictionary_file):
             args += ["-x", self.dictionary_file]
 
         args += self.extra_opts
