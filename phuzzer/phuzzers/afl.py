@@ -119,7 +119,7 @@ class AFL(Phuzzer):
             with open(self.dictionary_file, "w") as df:
                 for i,s in enumerate(set(self.dictionary)):
                     s_val = hexescape(s)
-                    df.write("string_%d=\"%s\"" % (i, s_val))
+                    df.write("string_%d=\"%s\"" % (i, s_val) + "\n")
 
         # write the seeds
         if self.in_dir != "-":
@@ -138,6 +138,7 @@ class AFL(Phuzzer):
         for _ in range(2, self.afl_count):
             self.processes.append(self._start_afl_instance())
 
+        return self
 
     @property
     def alive(self):
@@ -321,7 +322,7 @@ class AFL(Phuzzer):
 
         return queue_l
 
-    def pollenate(self, testcases):
+    def pollenate(self, *testcases):
         '''
         pollenate a fuzzing job with new testcases
 

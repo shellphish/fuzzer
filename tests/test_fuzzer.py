@@ -93,6 +93,22 @@ def test_multicb_spawn():
     if f.alive:
         f.stop()
 
+def test_pollenate():
+    fauxware = os.path.join(bin_location, "tests/i386/fauxware")
+    f = phuzzer.AFL(fauxware, resume=False)
+    f.start()
+
+    time.sleep(1)
+
+    # this should get synchronized
+    f.pollenate(b"A"*9+b"SOSNEAKY\0")
+    for _ in range(30):
+        if any(b"SOSNEAKY" in t for t in f.queue()):
+            break
+        time.sleep(1)
+    else:
+        assert False, "AFL failed to synchronize pollenated seed."
+
 def run_all():
     functions = globals()
     all_functions = dict(filter((lambda kv: kv[0].startswith('test_')), functions.items()))

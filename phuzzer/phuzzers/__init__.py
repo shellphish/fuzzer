@@ -176,7 +176,7 @@ class Phuzzer:
         '''
         raise NotImplementedError()
 
-    def pollenate(self, testcases):
+    def pollenate(self, *testcases):
         '''
         pollenate a fuzzing job with new testcases
 
